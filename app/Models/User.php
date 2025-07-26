@@ -25,6 +25,13 @@ class User extends Authenticatable
         'phone',
         'address',
         'document_path',
+        // New profile fields
+        'first_name', 'last_name', 'father_name', 'father_occupation', 'father_email', 'father_mobile',
+        'mother_name', 'mother_occupation', 'mother_email', 'mother_mobile', 'gender', 'dob', 'emergency_phone',
+        'religion', 'caste_category', 'caste', 'admission_quota', 'mother_tongue', 'nationality', 'marital_status',
+        'blood_group', 'aadhaar_id', 'passport_no', 'admission_date',
+        'present_state', 'present_city', 'present_address',
+        'permanent_state', 'permanent_city', 'permanent_address',
     ];
 
     /**
@@ -122,5 +129,21 @@ class User extends Authenticatable
         // If you have a direct hostel_id on users, use belongsTo(Hostel::class, 'hostel_id')
         // Otherwise, get via room assignment
         return $this->hasOneThrough(Hostel::class, RoomAssignment::class, 'student_id', 'id', 'id', 'hostel_id');
+    }
+
+    /**
+     * Get all fees for this student
+     */
+    public function studentFees()
+    {
+        return $this->hasMany(\App\Models\StudentFee::class, 'student_id');
+    }
+
+    /**
+     * Get the student profile for this user
+     */
+    public function studentProfile()
+    {
+        return $this->hasOne(StudentProfile::class);
     }
 }

@@ -24,7 +24,6 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div id="fee-breakdown" class="mb-2" style="display:none;"></div>
                         <div id="fee-checkboxes" class="mb-2" style="display:none;"></div>
                         <div class="form-group">
                             <label for="amount">Total Price / Rent</label>
@@ -66,13 +65,9 @@ function updatePrice() {
     var feeBreakdownDiv = document.getElementById('fee-breakdown');
     var feeCheckboxesDiv = document.getElementById('fee-checkboxes');
     if (sel.value && (price || fees.length > 0)) {
-        feeBreakdownDiv.style.display = 'block';
-        feeBreakdownDiv.innerHTML = '<strong>Room Rent:</strong> ₹' + (price || 0) + '<br>' + (breakdown ? breakdown : '');
         feeCheckboxesDiv.style.display = 'block';
         feeCheckboxesDiv.innerHTML = feeCheckboxes;
     } else {
-        feeBreakdownDiv.style.display = 'none';
-        feeBreakdownDiv.innerHTML = '';
         feeCheckboxesDiv.style.display = 'none';
         feeCheckboxesDiv.innerHTML = '';
     }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Warden\RoomController;
 use App\Http\Controllers\Warden\RoomTypeController;
 use App\Http\Controllers\Warden\ApplicationController;
 use App\Http\Controllers\Warden\MealController;
+use App\Http\Controllers\Warden\AttendanceController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\HostelController as StudentHostelController;
 use App\Http\Controllers\Student\ApplicationController as StudentApplicationController;
@@ -24,6 +25,8 @@ Route::get('/welcome', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/search', [\App\Http\Controllers\GlobalSearchController::class, 'index'])->name('global.search');
 
 // Warden Student Management
 Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(function () {
@@ -98,12 +101,19 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('/hostels/{hostel}/attendance/download-csv', [App\Http\Controllers\Warden\HostelController::class, 'downloadAttendanceCsv'])->name('hostels.attendance.download-csv');
     Route::get('/hostels/{hostel}/attendance/export-summary', [App\Http\Controllers\Warden\HostelController::class, 'downloadAttendanceSummaryExcel'])->name('hostels.attendance.export-summary');
     Route::get('/meals-attendance/{hostel}/export-summary', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'downloadMealsAttendanceSummaryExcel'])->name('meals-attendance.export-summary');
+    Route::get('/warden/attendance-report', [AttendanceController::class, 'report'])->name('attendance.report');
+    Route::get('/meals-attendance/{hostel}/attendance/download-csv', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'downloadAttendanceCsv'])->name('warden.meals-attendance.download-csv');
+    Route::get('/meals-attendance/{hostel}/attendance/download-pdf', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'downloadAttendancePdf'])->name('warden.meals-attendance.download-pdf');
+    Route::get('/meals-attendance/{hostel}/attendance/download-csv-full', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'downloadAttendanceCsvFull'])->name('warden.warden.meals-attendance.download-csv-full');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('students/{student}/edit', [\App\Http\Controllers\Warden\StudentController::class, 'edit'])->name('students.edit');
     Route::put('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'update'])->name('students.update');
+    Route::get('/fees', [App\Http\Controllers\Warden\FeesController::class, 'index'])->name('fees.index');
+    Route::get('/fees/student-status', [App\Http\Controllers\Warden\FeesController::class, 'studentStatus'])->name('fees.student_status');
+    Route::post('/warden/fees/notify-parents', [\App\Http\Controllers\Warden\FeesController::class, 'notifyParents'])->name('warden.fees.notify-parents');
 });
 
 Route::middleware(['auth', 'student'])->prefix('student')->name('student.')->group(function () {
@@ -122,6 +132,17 @@ Route::middleware(['auth', 'student'])->prefix('student')->name('student.')->gro
     Route::post('/fees/pay/{id}', [App\Http\Controllers\Student\FeesController::class, 'pay'])->name('fees.pay');
     Route::get('/fees/receipt/{id}', [App\Http\Controllers\Student\FeesController::class, 'receipt'])->name('fees.receipt');
     Route::get('/fees/receipt/{id}/download', [App\Http\Controllers\Student\FeesController::class, 'downloadReceipt'])->name('fees.receipt.download');
+    Route::get('/parents/edit', [App\Http\Controllers\Student\ParentController::class, 'edit'])->name('parents.edit');
+    Route::post('/parents/update', [App\Http\Controllers\Student\ParentController::class, 'update'])->name('parents.update');
+});
+
+// API: Check if attendance exists for a hostel and date
+Route::get('/api/hostels/{hostel}/attendance-exists', function($hostel) {
+    $date = request('date');
+    $exists = \App\Models\HostelAttendance::where('hostel_id', $hostel)
+        ->where('date', $date)
+        ->exists();
+    return response()->json(['exists' => $exists]);
 });
 
 require __DIR__.'/auth.php';

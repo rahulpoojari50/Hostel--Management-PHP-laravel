@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\RoomApplication;
 use App\Models\HostelAttendance;
+use App\Notifications\StudentAbsentNotification;
+use Illuminate\Support\Facades\Notification;
 
 class HostelController extends Controller
 {
@@ -218,10 +220,55 @@ class HostelController extends Controller
     public function students($id)
     {
         $hostel = Hostel::where('warden_id', Auth::id())->with(['roomApplications.student', 'roomApplications.roomType'])->findOrFail($id);
-        $applications = $hostel->roomApplications()
+        $perPage = request('per_page', 10);
+        $applicationsQuery = $hostel->roomApplications()
             ->whereIn('status', ['pending', 'approved'])
-            ->with(['student', 'roomType', 'student.roomAssignments.room'])
-            ->paginate(10); // Backend pagination
+            ->with(['student', 'roomType', 'student.roomAssignments.room']);
+
+        // Filtering logic
+        if (request()->filled('name')) {
+            $name = request('name');
+            $applicationsQuery->whereHas('student', function($q) use ($name) {
+                $q->where('name', 'like', "%$name%");
+            });
+        }
+        if (request()->filled('room_type')) {
+            $roomType = request('room_type');
+            $applicationsQuery->whereHas('roomType', function($q) use ($roomType) {
+                $q->where('type', $roomType);
+            });
+        }
+        if (request()->filled('email')) {
+            $email = request('email');
+            $applicationsQuery->whereHas('student', function($q) use ($email) {
+                $q->where('email', 'like', "%$email%");
+            });
+        }
+        if (request()->filled('room_no')) {
+            $roomNo = request('room_no');
+            if ($roomNo === 'none') {
+                // Students with no room assignment in this hostel
+                $applicationsQuery->whereDoesntHave('student.roomAssignments', function($q) use ($hostel) {
+                    $q->where('room_id', '!=', null)
+                      ->whereHas('room', function($qr) use ($hostel) {
+                          $qr->where('hostel_id', $hostel->id);
+                      });
+                });
+            } else {
+                $applicationsQuery->whereHas('student.roomAssignments.room', function($q) use ($roomNo, $hostel) {
+                    $q->where('hostel_id', $hostel->id)
+                      ->where('room_number', $roomNo);
+                });
+            }
+        }
+        if (request()->filled('category')) {
+            $category = request('category');
+            $applicationsQuery->whereHas('student', function($q) use ($category) {
+                $q->where('caste_category', $category);
+            });
+        }
+
+        $applications = $applicationsQuery->paginate($perPage)->appends(request()->except('page'));
         $allHostels = Hostel::where('warden_id', Auth::id())->with('roomTypes')->get();
         return view('warden.hostels_students', compact('hostel', 'applications', 'allHostels'));
     }
@@ -229,21 +276,78 @@ class HostelController extends Controller
     public function attendance($id, Request $request)
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
-        $date = $request->input('date', Carbon::today()->toDateString());
-        $students = $hostel->students;
-        $records = HostelAttendance::whereIn('student_id', $students->pluck('id'))
-            ->whereDate('date', $date)
-            ->get();
+        $date = $request->input('date', \Carbon\Carbon::today()->toDateString());
+
+        // Start with all students assigned to this hostel
+        $studentsQuery = $hostel->students()->with(['roomAssignments.room.roomType']);
+
+        // Filters
+        if ($request->filled('name')) {
+            $studentsQuery->where('name', 'like', '%' . $request->name . '%');
+        }
+        if ($request->filled('room_type')) {
+            $studentsQuery->whereHas('roomAssignments', function($q) use ($request) {
+                $q->where('status', 'active')
+                  ->whereHas('room.roomType', function($qr) use ($request) {
+                      $qr->where('type', $request->room_type);
+                  });
+            });
+        }
+        if ($request->filled('email')) {
+            $studentsQuery->where('email', 'like', '%' . $request->email . '%');
+        }
+        if ($request->filled('room_no')) {
+            $studentsQuery->whereHas('roomAssignments', function($q) use ($request) {
+                $q->where('status', 'active')
+                  ->whereHas('room', function($qr) use ($request) {
+                      $qr->where('room_number', $request->room_no);
+                  });
+            });
+        }
+        // Fix: join students table for category filter
+        if ($request->filled('category')) {
+            $studentsQuery->join('students', 'users.email', '=', 'students.email')
+                ->where('students.caste_category', $request->category)
+                ->select('users.*');
+        }
+
+        $students = $studentsQuery->get();
+
+        // Date range logic
+        $dateRange = $request->input('date_range');
+        $dates = [];
+        $startDate = $endDate = null;
+        if ($dateRange && strpos($dateRange, ' - ') !== false) {
+            [$startDate, $endDate] = array_map('trim', explode(' - ', $dateRange));
+            $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+            foreach ($period as $dt) {
+                $dates[] = $dt->format('Y-m-d');
+            }
+        } else {
+            $dates[] = $date;
+            $startDate = $endDate = $date;
+        }
+
+        // Attendance records for all students in the date range
+        $records = \App\Models\HostelAttendance::whereIn('student_id', $students->pluck('id'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get()
+            ->groupBy(['student_id', 'date']);
+
         $attendanceExists = $records->count() > 0;
-        return view('warden.hostels_attendance', compact('hostel', 'students', 'records', 'date', 'attendanceExists'));
+        return view('warden.hostels_attendance', compact('hostel', 'students', 'records', 'date', 'attendanceExists', 'dates', 'startDate', 'endDate'));
     }
 
     public function markAttendance(Request $request, $id)
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
         $date = $request->input('date', Carbon::today()->toDateString());
-        $students = $hostel->students;
-        return view('warden.hostels_mark_attendance', compact('hostel', 'students', 'date'));
+        $students = $hostel->students()->paginate(15); // 15 per page
+        $records = \App\Models\HostelAttendance::whereIn('student_id', $students->pluck('id'))
+            ->where('date', $date)
+            ->get();
+        $editMode = $request->has('edit') && $request->input('edit');
+        return view('warden.hostels_mark_attendance', compact('hostel', 'students', 'date', 'records', 'editMode'));
     }
 
     public function storeAttendance(Request $request, $id)
@@ -252,12 +356,25 @@ class HostelController extends Controller
         $validated = $request->validate([
             'date' => 'required|date',
             'status' => 'array',
-            'status.*' => 'in:Taken,Skipped',
+            'status.*' => 'in:Taken,Skipped,On Leave,Holiday',
         ]);
         $wardenId = Auth::id();
         $remarks = $request->input('remarks', []);
+
+        $editMode = $request->has('edit') && $request->input('edit');
+
+        // Prevent duplicate attendance for the same date, unless in edit mode
+        if (!$editMode) {
+            $attendanceExists = \App\Models\HostelAttendance::where('hostel_id', $hostel->id)
+                ->where('date', $validated['date'])
+                ->exists();
+            if ($attendanceExists) {
+                return redirect()->back()->with('error', 'Attendance already taken for this date.');
+            }
+        }
+
         foreach ($validated['status'] as $studentId => $state) {
-            HostelAttendance::updateOrCreate(
+            \App\Models\HostelAttendance::updateOrCreate(
                 [
                     'student_id' => $studentId,
                     'hostel_id' => $hostel->id,
@@ -269,6 +386,18 @@ class HostelController extends Controller
                     'remarks' => $remarks[$studentId] ?? null,
                 ]
             );
+            if ($state === 'Skipped') {
+                $student = \App\Models\User::find($studentId);
+                $parentEmail = $student->parent_email;
+                if ($parentEmail) {
+                    Notification::route('mail', $parentEmail)
+                        ->notify(new StudentAbsentNotification($student, $validated['date']));
+                }
+            }
+        }
+        if ($editMode) {
+            return redirect()->route('warden.hostels.attendance', [$hostel->id, 'date' => $validated['date']])
+                ->with('success', 'Hostel attendance updated!');
         }
         return redirect()->back()->with('success', 'Hostel attendance saved!');
     }

@@ -1,12 +1,20 @@
 @extends('layouts.admin')
 
 @section('content')
+@include('components.breadcrumb', [
+    'pageTitle' => ($selectedHostel ? $selectedHostel->name . ' Meals Attendance' : 'Meals Attendance'),
+    'breadcrumbs' => [
+        ['name' => 'Home', 'url' => url('/')],
+        ['name' => 'Meals Attendance', 'url' => route('warden.meals-attendance.index')],
+        $selectedHostel ? ['name' => $selectedHostel->name, 'url' => ''] : null
+    ]
+])
 <div class="container-fluid">
     {{-- <h1 class="h3 mb-4 text-gray-800">Meals Attendance</h1> --}}
     @if($selectedHostel)
-        <div class="mb-3">
+        {{-- <div class="mb-3">
             <h4>{{ $selectedHostel->name }}</h4>
-        </div>
+        </div> --}}
     @endif
     <div class="mb-2">
         <strong>Legend:</strong>
@@ -16,24 +24,33 @@
         <span class="badge badge-info">H</span> = Holiday
     </div>
     <form method="GET" class="mb-4 d-flex align-items-end" id="attendanceForm">
-        <div class="form-row align-items-end">
-            <div class="col-auto input-group">
-                <label class="mr-2">Date</label>
-                <input type="date" name="date" id="attendanceDate" class="form-control" value="{{ $date }}">
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-sm btn-primary" id="applyDateBtn">Apply</button>
-                </div>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-info ml-2">View Attendance</button>
+        <button type="button" class="btn btn-info ml-2" id="viewAttendanceBtn">View Attendance</button>
         <button type="button" class="btn btn-primary ml-2" id="takeAttendanceBtn">Take Attendance</button>
-        @if(!request('take'))
+        <button type="button" class="btn btn-warning ml-2" id="editMealsAttendanceBtn">Edit Attendance</button>
         <a href="{{ route('warden.meals-attendance.download-csv', [$selectedHostel->id, 'date' => $date]) }}" class="btn btn-success ml-2">Download CSV</a>
-        @endif
-        @if($selectedHostel && $students->count() && !request('edit'))
-            <button type="button" class="btn btn-warning ml-2" id="editMealsAttendanceBtn">Edit Attendance</button>
-        @endif
+        <input type="hidden" name="date" id="hiddenAttendanceDate" value="{{ $date }}">
     </form>
+
+    <!-- Modal for date selection -->
+    <div class="modal fade" id="dateModal" tabindex="-1" role="dialog" aria-labelledby="dateModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="dateModalLabel">Select Date</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <input type="date" class="form-control" id="modalAttendanceDate" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="submitDateBtn">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="edit-meals-attendance-error"></div>
     @if($selectedHostel && $students->count())
         @if(request('edit'))
@@ -52,6 +69,14 @@
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="mark_all" id="mark_all_absent" value="Skipped" onclick="markAllMeals('Skipped'); this.blur();">
                         <label class="form-check-label" for="mark_all_absent">All Absent</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="mark_all" id="mark_all_leave" value="On Leave" onclick="markAllMeals('On Leave'); this.blur();">
+                        <label class="form-check-label" for="mark_all_leave">All On Leave</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="mark_all" id="mark_all_holiday" value="Holiday" onclick="markAllMeals('Holiday'); this.blur();">
+                        <label class="form-check-label" for="mark_all_holiday">All Holiday</label>
                     </div>
                 </div>
                 <div class="card shadow mb-4">
@@ -81,6 +106,14 @@
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Skipped" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Skipped') checked @endif>
                                                 <label class="form-check-label">A</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="On Leave" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'On Leave') checked @endif>
+                                                <label class="form-check-label">L</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Holiday" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Holiday') checked @endif>
+                                                <label class="form-check-label">H</label>
                                             </div>
                                         </td>
                                         @endforeach
@@ -123,6 +156,14 @@
                         <input class="form-check-input" type="radio" name="mark_all" id="mark_all_absent" value="Skipped" onclick="markAllMeals('Skipped'); this.blur();">
                         <label class="form-check-label" for="mark_all_absent">All Absent</label>
                     </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="mark_all" id="mark_all_leave" value="On Leave" onclick="markAllMeals('On Leave'); this.blur();">
+                        <label class="form-check-label" for="mark_all_leave">All On Leave</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="mark_all" id="mark_all_holiday" value="Holiday" onclick="markAllMeals('Holiday'); this.blur();">
+                        <label class="form-check-label" for="mark_all_holiday">All Holiday</label>
+                    </div>
                 </div>
                 <div class="card shadow mb-4">
                     <div class="card-body">
@@ -151,6 +192,14 @@
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Skipped" @if($attendanceExists) disabled @endif>
                                                 <label class="form-check-label">A</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="On Leave" @if($attendanceExists) disabled @endif>
+                                                <label class="form-check-label">L</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Holiday" @if($attendanceExists) disabled @endif>
+                                                <label class="form-check-label">H</label>
                                             </div>
                                         </td>
                                         @endforeach
@@ -266,52 +315,73 @@ function markAllMeals(status) {
         if (radio.value === status) radio.checked = true;
     });
 }
-document.getElementById('takeAttendanceBtn')?.addEventListener('click', function() {
-    var date = document.getElementById('attendanceDate').value;
-    var url = window.location.pathname + '?date=' + encodeURIComponent(date) + '&take=1';
-    window.location.href = url;
-});
-document.getElementById('markAttendanceForm')?.addEventListener('submit', function(e) {
-    var date = document.getElementById('attendanceDate').value;
-    document.getElementById('markAttendanceDate').value = date;
-});
-let mealsHostelId = {{ $selectedHostel->id ?? 'null' }};
-let mealsAttendanceDate = @json($date);
-// Add Edit Attendance button handler if button exists
-const editMealsAttendanceBtn = document.getElementById('editMealsAttendanceBtn');
-if (editMealsAttendanceBtn) {
-    editMealsAttendanceBtn.addEventListener('click', function(e) {
+document.addEventListener('DOMContentLoaded', function() {
+    // Show modal on View Attendance click (all dates enabled)
+    document.getElementById('viewAttendanceBtn')?.addEventListener('click', function(e) {
         e.preventDefault();
-        // Date range validation: only allow editing for today and previous 4 days (using date strings to avoid timezone issues)
-        const selectedDateStr = mealsAttendanceDate;
-        const todayObj = new Date();
-        todayObj.setHours(0,0,0,0);
-        const yyyy = todayObj.getFullYear();
-        const mm = String(todayObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(todayObj.getDate()).padStart(2, '0');
-        const todayStr = `${yyyy}-${mm}-${dd}`;
-        // Calculate min date string (previous 4 days)
-        const minDateObj = new Date(todayObj);
-        minDateObj.setDate(todayObj.getDate() - 4);
-        const minY = minDateObj.getFullYear();
-        const minM = String(minDateObj.getMonth() + 1).padStart(2, '0');
-        const minD = String(minDateObj.getDate()).padStart(2, '0');
-        const minDateStr = `${minY}-${minM}-${minD}`;
-        if (selectedDateStr < minDateStr || selectedDateStr > todayStr) {
-            const errorDiv = document.getElementById('edit-meals-attendance-error');
-            errorDiv.innerHTML = '<div class="alert alert-danger mt-3">You cannot edit meals attendance for this date. Editing is only allowed for today and the previous 4 days.</div>';
-            setTimeout(() => { errorDiv.innerHTML = ''; }, 4000);
+        modalAction = 'view';
+        document.getElementById('modalAttendanceDate').removeAttribute('min');
+        document.getElementById('modalAttendanceDate').removeAttribute('max');
+        $('#dateModal').modal('show');
+    });
+    // Always open modal for Take Attendance
+    document.getElementById('takeAttendanceBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        modalAction = 'take';
+        var dateInput = document.getElementById('modalAttendanceDate');
+        var today = new Date();
+        var minDate = new Date();
+        minDate.setDate(today.getDate() - 3);
+        dateInput.setAttribute('max', formatDate(today));
+        dateInput.setAttribute('min', formatDate(minDate));
+        dateInput.value = '';
+        $('#dateModal').modal('show');
+    });
+    // Show modal on Edit Attendance click (restrict dates)
+    document.getElementById('editMealsAttendanceBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        modalAction = 'edit';
+        var dateInput = document.getElementById('modalAttendanceDate');
+        var today = new Date();
+        var minDate = new Date();
+        minDate.setDate(today.getDate() - 3);
+        dateInput.setAttribute('max', formatDate(today));
+        dateInput.setAttribute('min', formatDate(minDate));
+        $('#dateModal').modal('show');
+    });
+    // On modal submit, handle according to action
+    document.getElementById('submitDateBtn')?.addEventListener('click', function() {
+        var modalDate = document.getElementById('modalAttendanceDate').value;
+        if (!modalDate) {
+            document.getElementById('modalAttendanceDate').focus();
             return;
         }
-        // If valid, redirect to edit mode (or show edit form as per your app logic)
-        window.location.href = `?date=${mealsAttendanceDate}&edit=1`;
+        if (modalAction === 'view') {
+            document.getElementById('hiddenAttendanceDate').value = modalDate;
+            document.getElementById('attendanceForm').submit();
+        } else if (modalAction === 'take') {
+            // Redirect to take attendance page for selected date
+            var takeUrl = "/warden/meals-attendance/{{ $selectedHostel->id }}";
+            takeUrl += '?date=' + encodeURIComponent(modalDate) + '&take=1';
+            window.location.href = takeUrl;
+        } else if (modalAction === 'edit') {
+            // Redirect to edit attendance page for selected date
+            var editUrl = "/warden/meals-attendance/{{ $selectedHostel->id }}";
+            editUrl += '?date=' + encodeURIComponent(modalDate) + '&edit=1';
+            window.location.href = editUrl;
+        }
+        $('#dateModal').modal('hide');
     });
-}
-document.getElementById('applyDateBtn')?.addEventListener('click', function() {
-    var date = document.getElementById('attendanceDate').value;
-    var url = window.location.pathname + '?date=' + encodeURIComponent(date);
-    window.location.href = url;
 });
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+    return [year, month, day].join('-');
+}
 </script>
 @if(session('success'))
 <script>

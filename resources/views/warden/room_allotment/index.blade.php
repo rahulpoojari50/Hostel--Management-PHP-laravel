@@ -16,54 +16,21 @@
     ]
 ])
 
-<!-- Add Room Type Button and Modal -->
-<div class="mb-3 d-flex justify-content-end">
-    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#addRoomTypeModal">
-        <i class="fas fa-plus"></i> Add Room Type
-    </button>
-</div>
-
-<!-- Add Room Type Modal -->
-<div class="modal fade" id="addRoomTypeModal" tabindex="-1" role="dialog" aria-labelledby="addRoomTypeModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <form method="POST" action="{{ isset($pendingApplications[0]) ? route('warden.hostels.room-types.store', $pendingApplications[0]->hostel_id) : '#' }}">
-        @csrf
-        @if(isset($pendingApplications[0]))
-          <input type="hidden" name="hostel_id" value="{{ $pendingApplications[0]->hostel_id }}">
-        @endif
-        <div class="modal-header">
-          <h5 class="modal-title" id="addRoomTypeModalLabel">Add Room Type</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="roomType">Room Type</label>
-            <input type="text" class="form-control" id="roomType" name="type" placeholder="e.g. Single, Double, Triple, Quad" required>
-          </div>
-          <div class="form-group">
-            <label for="capacity">Capacity</label>
-            <input type="number" class="form-control" id="capacity" name="capacity" min="1" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Room Type</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+{{-- Removed Add Room Type Button and Modal --}}
 
 @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert alert-success alert-dismissible fade show" role="alert" id="allotment-success-alert">
         {{ session('success') }}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
+    <script>
+        setTimeout(function() {
+            var alert = document.getElementById('allotment-success-alert');
+            if(alert) { alert.classList.remove('show'); alert.classList.add('fade'); alert.style.display = 'none'; }
+        }, 3000);
+    </script>
 @endif
 
 <!-- Content Row -->
@@ -75,69 +42,8 @@
             </div>
             <form method="POST" action="{{ route('warden.room-allotment.bulk_reject') }}" id="bulkRejectForm">
                 @csrf
-                <div class="table-responsive">
-                    <table class="table table-bordered w-100 mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th><input type="checkbox" id="selectAllReject"></th>
-                                <th>Student Name</th>
-                                <th>Email</th>
-                                <th>Hostel</th>
-                                <th>Room Type</th>
-                                <th>Applied Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($pendingApplications as $application)
-                                <tr>
-                                    <td><input type="checkbox" name="application_ids[]" value="{{ $application->id }}"></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <i class="fas fa-user fa-2x text-primary"></i>
-                                            </div>
-                                            <div class="flex-grow-1 ml-3">
-                                                <div class="font-weight-bold">{{ $application->student->name ?? '-' }}</div>
-                                                <div class="text-muted small">{{ $application->student->phone ?? 'No phone' }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ $application->student->email }}</td>
-                                    <td>
-                                        @if($application->status === 'pending' && isset($application->roomAssignments) && $application->roomAssignments && $application->roomAssignments->count() === 0)
-                                            &nbsp;
-                                        @else
-                                            <span class="badge badge-info">{{ $application->hostel->name ?? '-' }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($application->status === 'pending' && isset($application->roomAssignments) && $application->roomAssignments && $application->roomAssignments->count() === 0)
-                                            &nbsp;
-                                        @else
-                                            <span class="badge badge-secondary">
-                                                {{ $application->roomType->type ?? '-' }} ({{ $application->roomType->capacity ?? '-' }} beds)
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $application->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        <a href="{{ route('warden.room-allotment.show', $application) }}" 
-                                           class="btn btn-primary btn-sm">
-                                            <i class="fas fa-user-plus fa-sm"></i> Allot Room
-                                        </a>
-                                        <form action="{{ route('warden.applications.update', $application) }}" method="POST" style="display:inline-block;">
-                                            @csrf
-                                            <input type="hidden" name="action" value="reject">
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this application?');">
-                                                <i class="fas fa-times fa-sm"></i> Reject
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div class="table-responsive" id="pending-applications-table">
+                    @include('warden.room_allotment._table', ['pendingApplications' => $pendingApplications])
                 </div>
                 <div class="mb-3 d-flex justify-content-end align-items-center">
                     <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject the selected applications?')">
@@ -146,7 +52,7 @@
                 </div>
             </form>
             <div class="d-flex justify-content-end">
-                {{ $pendingApplications->links('pagination::bootstrap-4') }}
+                <!-- Pagination removed for debugging -->
             </div>
         </div>
     </div>
@@ -198,11 +104,25 @@
                 "info": "Showing _START_ to _END_ of _TOTAL_ applications"
             }
         });
-    });
 
-    document.getElementById('selectAllReject').addEventListener('change', function() {
-        const checked = this.checked;
-        document.querySelectorAll('input[name="application_ids[]"]').forEach(cb => cb.checked = checked);
+        document.getElementById('selectAllReject').addEventListener('change', function() {
+            const checked = this.checked;
+            document.querySelectorAll('input[name="application_ids[]"]').forEach(cb => cb.checked = checked);
+        });
+
+        function refreshPendingApplications() {
+            var url = window.location.pathname + '?page=1&_t=' + new Date().getTime();
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'html',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(data) {
+                    $('#pending-applications-table').html(data);
+                }
+            });
+        }
+        setInterval(refreshPendingApplications, 10000); // 10 seconds
     });
 </script>
 @endpush 

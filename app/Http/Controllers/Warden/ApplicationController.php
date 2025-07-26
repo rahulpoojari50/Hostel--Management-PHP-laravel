@@ -86,18 +86,18 @@ class ApplicationController extends Controller
      */
     public function allotmentIndex()
     {
-        $warden = Auth::user();
-        $hostelIds = Hostel::where('warden_id', $warden->id)->pluck('id');
         $pendingApplications = RoomApplication::with(['student', 'hostel', 'roomType'])
-            ->whereIn('hostel_id', $hostelIds)
             ->where('status', 'pending')
             ->latest()
-            ->paginate(10); // Add pagination
+            ->get(); // No pagination for debugging
         $pageTitle = 'Room Allotment';
         $breadcrumbs = [
             ['name' => 'Hostel Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Room Allotment', 'url' => '']
         ];
+        if (request()->ajax()) {
+            return view('warden.room_allotment._table', compact('pendingApplications'))->render();
+        }
         return view('warden.room_allotment.index', compact('pendingApplications', 'pageTitle', 'breadcrumbs'));
     }
 
@@ -163,10 +163,11 @@ class ApplicationController extends Controller
         $room = \App\Models\Room::findOrFail($validated['room_id']);
         
         // Verify room is available and matches application requirements
-        if ($room->hostel_id !== $application->hostel_id || 
-            $room->room_type_id !== $application->room_type_id ||
+        if (
+            $room->hostel_id !== $application->hostel_id ||
             $room->status !== 'available' ||
-            $room->current_occupants >= $room->max_occupants) {
+            $room->current_occupants >= $room->max_occupants
+        ) {
             return redirect()->back()->with('error', 'Selected room is not available.');
         }
         

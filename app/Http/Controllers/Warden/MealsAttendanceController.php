@@ -132,4 +132,183 @@ class MealsAttendanceController extends Controller
         $filename = 'meals-attendance-summary-' . $hostel->name . '-' . $startDate . '-to-' . $endDate . '.pdf';
         return $pdf->download($filename);
     }
+
+    /**
+     * Download meal attendance for a hostel between two dates as CSV
+     */
+    public function downloadAttendanceCsv(Request $request, $hostelId)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $hostel = \App\Models\Hostel::findOrFail($hostelId);
+        $students = $hostel->students;
+        $studentIds = $students->pluck('id');
+        $dates = [];
+        $start = \Carbon\Carbon::parse($dateFrom);
+        $end = \Carbon\Carbon::parse($dateTo);
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        $mealTypes = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
+        $attendanceRecords = \App\Models\MealAttendance::whereIn('student_id', $studentIds)
+            ->where('hostel_id', $hostelId)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->get();
+        $filename = 'meal_attendance_' . $hostel->name . '_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+        $columns = ['Name', 'Email', 'Room', 'Hostel', 'Date', 'Breakfast', 'Lunch', 'Snacks', 'Dinner', 'Summary'];
+        $rows = [];
+        foreach ($students as $student) {
+            foreach ($dates as $date) {
+                $row = [
+                    $student->name,
+                    $student->email,
+                    optional($student->roomAssignments->first()->room ?? null)->room_number,
+                    $hostel->name,
+                    $date
+                ];
+                $presentCount = 0;
+                foreach ($mealTypes as $mealType) {
+                    $record = $attendanceRecords->first(function($rec) use ($student, $date, $mealType) {
+                        return $rec->student_id == $student->id && $rec->date == $date && $rec->meal_type == $mealType;
+                    });
+                    $status = $record ? $record->status : null;
+                    if ($status === 'Taken') $presentCount++;
+                    $row[] = $status === 'Taken' ? 'Present' : ($status === 'Skipped' ? 'Absent' : ($status ?? '-'));
+                }
+                $row[] = $presentCount . '/4 meals present';
+                $rows[] = $row;
+            }
+        }
+        return response()->stream(function() use ($columns, $rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, $columns);
+            foreach ($rows as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+        }, 200, $headers);
+    }
+
+    /**
+     * Download meal attendance for a hostel between two dates as PDF
+     */
+    public function downloadAttendancePdf(Request $request, $hostelId)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $hostel = \App\Models\Hostel::findOrFail($hostelId);
+        $students = $hostel->students;
+        $studentIds = $students->pluck('id');
+        $dates = [];
+        $start = \Carbon\Carbon::parse($dateFrom);
+        $end = \Carbon\Carbon::parse($dateTo);
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        $mealTypes = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
+        $attendanceRecords = \App\Models\MealAttendance::whereIn('student_id', $studentIds)
+            ->where('hostel_id', $hostelId)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->get();
+        $tableRows = [];
+        foreach ($students as $student) {
+            foreach ($dates as $date) {
+                $row = [
+                    'name' => $student->name,
+                    'email' => $student->email,
+                    'room' => optional($student->roomAssignments->first()->room ?? null)->room_number,
+                    'hostel' => $hostel->name,
+                    'date' => $date,
+                ];
+                $presentCount = 0;
+                foreach ($mealTypes as $mealType) {
+                    $record = $attendanceRecords->first(function($rec) use ($student, $date, $mealType) {
+                        return $rec->student_id == $student->id && $rec->date == $date && $rec->meal_type == $mealType;
+                    });
+                    $status = $record ? $record->status : null;
+                    if ($status === 'Taken') $presentCount++;
+                    $row[strtolower($mealType)] = $status === 'Taken' ? 'Present' : ($status === 'Skipped' ? 'Absent' : ($status ?? '-'));
+                }
+                $row['summary'] = $presentCount . '/4 meals present';
+                $tableRows[] = $row;
+            }
+        }
+        $pdf = \PDF::loadView('warden.pdf.meal_attendance_table', [
+            'hostel' => $hostel,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'tableRows' => $tableRows,
+            'mealTypes' => $mealTypes,
+        ])->setPaper('a3', 'landscape');
+        $filename = 'meal_attendance_' . $hostel->name . '_' . $dateFrom . '_to_' . $dateTo . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Download meal attendance for a hostel between two dates as CSV (full table info)
+     */
+    public function downloadAttendanceCsvFull(Request $request, $hostelId)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $hostel = \App\Models\Hostel::findOrFail($hostelId);
+        $students = $hostel->students;
+        $studentIds = $students->pluck('id');
+        $dates = [];
+        $start = \Carbon\Carbon::parse($dateFrom);
+        $end = \Carbon\Carbon::parse($dateTo);
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        $mealTypes = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
+        $attendanceRecords = \App\Models\MealAttendance::whereIn('student_id', $studentIds)
+            ->where('hostel_id', $hostelId)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->get();
+        $columns = ['Name', 'Email', 'Room', 'Hostel', 'Date'];
+        foreach ($mealTypes as $mealType) {
+            $columns[] = $mealType;
+        }
+        $columns[] = 'Summary';
+        $rows = [];
+        foreach ($students as $student) {
+            foreach ($dates as $date) {
+                $row = [
+                    $student->name,
+                    $student->email,
+                    optional($student->roomAssignments->first()->room ?? null)->room_number,
+                    $hostel->name,
+                    $date
+                ];
+                $presentCount = 0;
+                foreach ($mealTypes as $mealType) {
+                    $record = $attendanceRecords->first(function($rec) use ($student, $date, $mealType) {
+                        return $rec->student_id == $student->id && $rec->date == $date && $rec->meal_type == $mealType;
+                    });
+                    $status = $record ? $record->status : null;
+                    if ($status === 'Taken') $presentCount++;
+                    $row[] = $status === 'Taken' ? 'Present' : ($status === 'Skipped' ? 'Absent' : ($status ?? '-'));
+                }
+                $row[] = $presentCount . '/4 meals present';
+                $rows[] = $row;
+            }
+        }
+        $filename = 'meal_attendance_full_' . $hostel->name . '_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+        return response()->stream(function() use ($columns, $rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, $columns);
+            foreach ($rows as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+        }, 200, $headers);
+    }
 } 

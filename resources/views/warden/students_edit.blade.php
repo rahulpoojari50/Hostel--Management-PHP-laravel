@@ -3,8 +3,15 @@
 @section('title', 'Edit Student')
 
 @section('content')
+@include('components.breadcrumb', [
+    'pageTitle' => 'Edit Student',
+    'breadcrumbs' => [
+        ['name' => 'Home', 'url' => url('/')],
+        ['name' => 'Students', 'url' => route('warden.hostels.students', $student->id)],
+        ['name' => 'Edit Student', 'url' => '']
+    ]
+])
 <div class="container-fluid py-4">
-    <h1 class="h3 mb-4 text-gray-800">Edit Student</h1>
     <div class="card shadow mb-4">
         <div class="card-body">
             <form action="{{ route('warden.students.update', $student->id) }}" method="POST">

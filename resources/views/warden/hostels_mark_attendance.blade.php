@@ -3,26 +3,65 @@
 @section('title', 'Mark Hostel Attendance')
 
 @section('content')
+@php
+    $attendanceExists = isset($records) && $records->count() > 0;
+@endphp
 <div class="container-fluid py-4">
+    @if($attendanceExists && empty($editMode))
+        <div class="alert alert-warning mb-3">Attendance already taken for this date. You cannot modify the records.</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-warning" id="attendance-error-alert">{{ session('error') }}</div>
+        <script>
+            setTimeout(function() {
+                var alert = document.getElementById('attendance-error-alert');
+                if (alert) alert.style.display = 'none';
+            }, 3000);
+        </script>
+    @endif
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success" id="attendance-success-alert">{{ session('success') }}</div>
+        <script>
+            setTimeout(function() {
+                var alert = document.getElementById('attendance-success-alert');
+                if (alert) alert.style.display = 'none';
+            }, 3000);
+        </script>
     @endif
     <a href="{{ route('warden.hostels.attendance', $hostel->id) }}" class="btn btn-secondary mb-3">&larr; Back</a>
     <h1 class="h3 mb-4 text-gray-800">Mark Attendance for {{ $hostel->name }}</h1>
+    <div class="mb-2">
+        <strong>Legend:</strong>
+        <span class="badge badge-success">P</span> = Present,
+        <span class="badge badge-danger">A</span> = Absent,
+        <span class="badge badge-warning">L</span> = On Leave,
+        <span class="badge badge-info">H</span> = Holiday
+    </div>
     <form method="POST" action="{{ route('warden.warden.hostels.attendance.store', $hostel->id) }}">
         @csrf
         <input type="hidden" name="date" value="{{ $date }}">
+        @if(!empty($editMode))
+            <input type="hidden" name="edit" value="1">
+        @endif
         <div class="mb-3">
             <strong>Date:</strong> {{ $date }}
         </div>
         <div class="mb-3">
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="mark_all" id="mark_all_present" value="Taken" onclick="markAll('Taken'); this.blur();">
+                <input class="form-check-input" type="radio" name="mark_all" id="mark_all_present" value="Taken" onclick="markAllHostel('Taken'); this.blur();">
                 <label class="form-check-label" for="mark_all_present">All Present</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="mark_all" id="mark_all_absent" value="Skipped" onclick="markAll('Skipped'); this.blur();">
+                <input class="form-check-input" type="radio" name="mark_all" id="mark_all_absent" value="Skipped" onclick="markAllHostel('Skipped'); this.blur();">
                 <label class="form-check-label" for="mark_all_absent">All Absent</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="mark_all" id="mark_all_leave" value="On Leave" onclick="markAllHostel('On Leave'); this.blur();">
+                <label class="form-check-label" for="mark_all_leave">All On Leave</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="mark_all" id="mark_all_holiday" value="Holiday" onclick="markAllHostel('Holiday'); this.blur();">
+                <label class="form-check-label" for="mark_all_holiday">All Holiday</label>
             </div>
         </div>
         <div class="card shadow mb-4">
@@ -37,63 +76,68 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @php $present = 0; $absent = 0; @endphp
                             @foreach($students as $student)
+                                @php $record = isset($records) ? $records->where('student_id', $student->id)->first() : null; @endphp
                                 <tr>
                                     <td>{{ $student->name }}</td>
                                     <td class="text-center">
                                         <div class="form-check form-check-inline">
-                                            <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" id="present_{{ $student->id }}" value="Taken" checked onchange="updateSummary(); clearBulk();">
-                                            <label class="form-check-label" for="present_{{ $student->id }}">Present</label>
+                                            <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" value="Taken" @if(optional($record)->status === 'Taken' || !$record) checked @endif @if($attendanceExists && empty($editMode)) disabled @endif>
+                                            <label class="form-check-label">P</label>
                                         </div>
                                         <div class="form-check form-check-inline">
-                                            <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" id="absent_{{ $student->id }}" value="Skipped" onchange="updateSummary(); clearBulk();">
-                                            <label class="form-check-label" for="absent_{{ $student->id }}">Absent</label>
+                                            <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" value="Skipped" @if(optional($record)->status === 'Skipped') checked @endif @if($attendanceExists && empty($editMode)) disabled @endif>
+                                            <label class="form-check-label">A</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" value="On Leave" @if(optional($record)->status === 'On Leave') checked @endif @if($attendanceExists && empty($editMode)) disabled @endif>
+                                            <label class="form-check-label">L</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" value="Holiday" @if(optional($record)->status === 'Holiday') checked @endif @if($attendanceExists && empty($editMode)) disabled @endif>
+                                            <label class="form-check-label">H</label>
                                         </div>
                                     </td>
                                     <td>
-                                        <input type="text" name="remarks[{{ $student->id }}]" class="form-control" placeholder="Optional remarks">
+                                        <input type="text" name="remarks[{{ $student->id }}]" class="form-control" placeholder="Optional remarks" value="{{ $record->remarks ?? '' }}" @if($attendanceExists && empty($editMode)) readonly @endif>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-3">
-                    <strong>Summary:</strong>
-                    <span id="presentCount">Present: 0</span> |
-                    <span id="absentCount">Absent: 0</span> |
-                    <span id="percentage">Attendance: 0%</span>
-                </div>
-                <button class="btn btn-primary mt-3">Submit Attendance</button>
+                <button class="btn btn-success mt-3" @if($attendanceExists && empty($editMode)) disabled @endif>Submit Attendance</button>
             </div>
         </div>
     </form>
 </div>
 <script>
-function markAll(status) {
+function markAllHostel(status) {
     document.querySelectorAll('.status-radio').forEach(function(radio) {
         if (radio.value === status) radio.checked = true;
     });
-    updateSummary();
 }
-function clearBulk() {
-    document.querySelectorAll('input[name=mark_all]').forEach(function(radio) {
-        radio.checked = false;
+
+// --- Instant attendance-exists check ---
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[name="date"]');
+    if (!dateInput) return;
+    dateInput.addEventListener('change', function() {
+        const date = this.value;
+        const hostelId = {{ $hostel->id }};
+        fetch(`/api/hostels/${hostelId}/attendance-exists?date=${date}`)
+            .then(res => res.json())
+            .then(data => {
+                const warning = document.getElementById('attendance-exists-warning');
+                if (data.exists) {
+                    warning.textContent = 'Attendance already taken for this date.';
+                    warning.style.display = '';
+                } else {
+                    warning.textContent = '';
+                    warning.style.display = 'none';
+                }
+            });
     });
-}
-function updateSummary() {
-    let present = 0, absent = 0;
-    document.querySelectorAll('input.status-radio:checked').forEach(function(radio) {
-        if (radio.value === 'Taken') present++;
-        else absent++;
-    });
-    let total = present + absent;
-    let percent = total ? Math.round((present / total) * 100) : 0;
-    document.getElementById('presentCount').textContent = 'Present: ' + present;
-    document.getElementById('absentCount').textContent = 'Absent: ' + absent;
-    document.getElementById('percentage').textContent = 'Attendance: ' + percent + '%';
-}
-document.addEventListener('DOMContentLoaded', updateSummary);
+});
 </script>
 @endsection 

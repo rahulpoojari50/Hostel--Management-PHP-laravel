@@ -16,8 +16,11 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        $profile = $user->studentProfile;
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'profile' => $profile,
         ]);
     }
 
@@ -27,19 +30,21 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $user->fill($request->validated());
-
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
+        $data = $request->validated();
 
         // Handle document upload
         if ($request->hasFile('document')) {
             $path = $request->file('document')->store('documents', 'public');
-            $user->document_path = $path;
+            $data['document_path'] = $path;
         }
 
-        $user->save();
+        $profile = $user->studentProfile ?: $user->studentProfile()->make();
+        $profile->fill($data);
+        $profile->user_id = $user->id;
+        $profile->save();
+
+        // Force reload of the relationship for the next request
+        $user->unsetRelation('studentProfile');
 
         return Redirect::route('student.profile.edit')->with('status', 'profile-updated');
     }

@@ -6,9 +6,61 @@
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Manage {{ $hostel->name }}</h1>
-    <a href="{{ route('warden.manage-hostel.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
-        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostels
-    </a>
+    <div>
+        <a href="{{ route('warden.manage-hostel.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostels
+        </a>
+        <button type="button" class="btn btn-success btn-sm ml-2" data-toggle="modal" data-target="#addRoomTypeModal">
+            <i class="fas fa-plus"></i> Add Room Type
+        </button>
+    </div>
+</div>
+
+<!-- Add Room Type Modal -->
+<div class="modal fade" id="addRoomTypeModal" tabindex="-1" role="dialog" aria-labelledby="addRoomTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{{ route('warden.hostels.room-types.store', $hostel) }}">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title" id="addRoomTypeModalLabel">Add Room Type</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="roomType">Type</label>
+            <input type="text" class="form-control" id="roomType" name="type" placeholder="e.g. Single, Double, Triple, Quad" required>
+          </div>
+          <div class="form-group">
+            <label for="capacity">Capacity</label>
+            <input type="number" class="form-control" id="capacity" name="capacity" min="1" max="20" required>
+          </div>
+          <div class="form-group">
+            <label for="price_per_month">Price per Month</label>
+            <input type="number" class="form-control" id="price_per_month" name="price_per_month" required>
+          </div>
+          <div class="form-group">
+            <label for="total_rooms">Total Rooms</label>
+            <input type="number" class="form-control" id="total_rooms" name="total_rooms" required>
+          </div>
+          <div class="form-group">
+            <label for="available_rooms">Available Rooms</label>
+            <input type="number" class="form-control" id="available_rooms" name="available_rooms" required>
+          </div>
+          <div class="form-group">
+            <label for="facilities">Facilities (comma separated)</label>
+            <input type="text" class="form-control" id="facilities" name="facilities" placeholder="AC, WiFi, etc.">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Room Type</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 @include('components.breadcrumb', [

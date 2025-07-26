@@ -26,6 +26,22 @@
 
     @stack('styles')
 
+    <style>
+        .sidebar .submenu {
+            padding-left: 1.5rem;
+        }
+        .sidebar .submenu .nav-item .nav-link {
+            font-size: 0.91rem;
+            font-weight: 500;
+            color: #e3e6f0;
+            padding-left: 1.5rem;
+        }
+        .sidebar .submenu .nav-item .nav-link.active {
+            color: #4e73df;
+            font-weight: 600;
+        }
+    </style>
+
 </head>
 
 <body id="page-top">
@@ -63,6 +79,16 @@
                         <i class="fas fa-fw fa-building"></i>
                         <span>Browse Hostel</span></a>
                 </li>
+                <li class="nav-item {{ request()->routeIs('student.parents.edit') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('student.parents.edit') }}">
+                        <i class="fas fa-fw fa-user-friends"></i>
+                        <span>Parent Details</span></a>
+                </li>
+                <li class="nav-item {{ request()->routeIs('student.profile.edit') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('student.profile.edit') }}">
+                        <i class="fas fa-fw fa-user"></i>
+                        <span>Profile</span></a>
+                </li>
                 <!-- Fees Parent Menu -->
                 @php
                     $feesActive = request()->routeIs('student.fees.*');
@@ -83,26 +109,41 @@
                 </li>
             @else
                 <!-- Warden/Admin Sidebar -->
-                <!-- Divider -->
                 <hr class="sidebar-divider">
-                <!-- Heading -->
                 <div class="sidebar-heading">
                     Hostel Management
                 </div>
+                <!-- Dashboard -->
                 <li class="nav-item {{ request()->routeIs('warden.dashboard') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('warden.dashboard') }}">
                         <i class="fas fa-fw fa-tachometer-alt"></i>
                         <span>Dashboard</span></a>
                 </li>
-                <li class="nav-item {{ request()->routeIs('warden.hostels.*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('warden.hostels.index') }}">
-                        <i class="fas fa-fw fa-building"></i>
-                        <span>Hostels</span>
+                <!-- Hostels Parent Menu -->
+                @php
+                    $hostelsActive = request()->routeIs('warden.manage-hostel.*') || request()->routeIs('warden.rooms.*') || request()->routeIs('warden.room-allotment.*');
+                @endphp
+                <li class="nav-item has-sub">
+                    <a href="#hostelsSubmenu" class="nav-link" data-toggle="collapse" role="button" aria-expanded="{{ $hostelsActive ? 'true' : 'false' }}" aria-controls="hostelsSubmenu">
+                        <i class="fas fa-hotel"></i>
+                        <span>Hostel</span>
                     </a>
+                    <ul class="submenu collapse{{ $hostelsActive ? ' show' : '' }}" id="hostelsSubmenu">
+                        <li class="nav-item {{ request()->routeIs('warden.manage-hostel.*') ? 'active' : '' }}">
+                            <a href="{{ route('warden.manage-hostel.index') }}" class="nav-link">Manage Hostel</a>
+                        </li>
+                        <li class="nav-item {{ request()->routeIs('warden.rooms.*') ? 'active' : '' }}">
+                            <a href="{{ route('warden.rooms.index') }}" class="nav-link">Rooms</a>
+                        </li>
+                        <li class="nav-item {{ request()->routeIs('warden.room-allotment.*') ? 'active' : '' }}">
+                            <a href="{{ route('warden.room-allotment.index') }}" class="nav-link">Room Allotment</a>
+                        </li>
+                    </ul>
                 </li>
+                <!-- Students -->
                 <li class="nav-item {{ request()->routeIs('warden.hostels.students') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('warden.hostels.students', Auth::user()->id) }}">
-                        <i class="fas fa-fw fa-users"></i>
+                        <i class="fas fa-user-graduate"></i>
                         <span>Students</span>
                     </a>
                 </li>
@@ -112,33 +153,35 @@
                 @endphp
                 <li class="nav-item has-sub">
                     <a href="#attendanceSubmenu" class="nav-link" data-toggle="collapse" role="button" aria-expanded="{{ $attendanceActive ? 'true' : 'false' }}" aria-controls="attendanceSubmenu">
-                        <i class="fas fa-fw fa-check-square"></i>
+                        <i class="fas fa-clipboard-list"></i>
                         <span>Attendance</span>
                     </a>
                     <ul class="submenu collapse{{ $attendanceActive ? ' show' : '' }}" id="attendanceSubmenu">
                         <li class="nav-item {{ request()->routeIs('warden.hostels_attendance_hostels') ? 'active' : '' }}">
                             <a href="{{ route('warden.hostels_attendance_hostels') }}" class="nav-link">Hostel Attendance</a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('warden.attendance.report') }}" class="nav-link">Attendance Report</a>
+                        </li>
                         <li class="nav-item {{ request()->routeIs('warden.meals-attendance.*') ? 'active' : '' }}">
                             <a href="{{ route('warden.meals-attendance.index') }}" class="nav-link">Meal Attendance</a>
                         </li>
                     </ul>
                 </li>
-                <!-- End Attendance Parent Menu -->
-                <li class="nav-item {{ request()->routeIs('warden.manage-hostel.*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('warden.manage-hostel.index') }}">
-                        <i class="fas fa-fw fa-cogs"></i>
-                        <span>Manage Hostel</span></a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('warden.rooms.*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('warden.rooms.index') }}">
-                        <i class="fas fa-fw fa-bed"></i>
-                        <span>Rooms</span></a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('warden.room-allotment.*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('warden.room-allotment.index') }}">
-                        <i class="fas fa-fw fa-user-plus"></i>
-                        <span>Room Allotment</span></a>
+                <!-- Fees Parent Menu -->
+                <li class="nav-item has-sub">
+                    <a href="#wardenFeesSubmenu" class="nav-link" data-toggle="collapse" role="button" aria-expanded="{{ request()->routeIs('warden.fees.*') ? 'true' : 'false' }}" aria-controls="wardenFeesSubmenu">
+                        <i class="fas fa-rupee-sign"></i>
+                        <span>Fees</span>
+                    </a>
+                    <ul class="submenu collapse{{ request()->routeIs('warden.fees.*') ? ' show' : '' }}" id="wardenFeesSubmenu">
+                        <li class="nav-item {{ request()->routeIs('warden.fees.index') ? 'active' : '' }}">
+                            <a href="{{ route('warden.fees.index') }}" class="nav-link">Add Fees</a>
+                        </li>
+                        <li class="nav-item {{ request()->routeIs('warden.fees.student_status') ? 'active' : '' }}">
+                            <a href="{{ route('warden.fees.student_status') }}" class="nav-link">Student Status</a>
+                        </li>
+                    </ul>
                 </li>
             @endif
 
@@ -168,12 +211,11 @@
                     </button>
 
                     <!-- Topbar Search -->
-                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search" method="GET" action="{{ route('global.search') }}">
                         <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
-                                aria-label="Search" aria-describedby="basic-addon2">
+                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." name="q" value="{{ request('q') }}" aria-label="Search" aria-describedby="basic-addon2">
                             <div class="input-group-append">
-                                <button class="btn btn-primary" type="button">
+                                <button class="btn btn-primary" type="submit">
                                     <i class="fas fa-search fa-sm"></i>
                                 </button>
                             </div>
@@ -242,6 +284,7 @@
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
 
+                    {{--
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('success') }}
@@ -250,7 +293,6 @@
                             </button>
                         </div>
                     @endif
-
                     @if(session('error'))
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             {{ session('error') }}
@@ -259,6 +301,7 @@
                             </button>
                         </div>
                     @endif
+                    --}}
 
                     @yield('content')
 

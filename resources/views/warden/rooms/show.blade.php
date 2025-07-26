@@ -3,12 +3,23 @@
 @section('title', $hostel->name . ' - Rooms')
 
 @section('content')
+@include('components.breadcrumb', [
+    'pageTitle' => $hostel->name . ' Rooms',
+    'breadcrumbs' => [
+        ['name' => 'Home', 'url' => url('/')],
+        ['name' => 'Rooms Management', 'url' => route('warden.rooms.index')],
+        ['name' => $hostel->name . ' Rooms', 'url' => '']
+    ]
+])
+
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">{{ $hostel->name }} - Rooms Overview</h1>
-    <a href="{{ route('warden.rooms.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
-        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostels
-    </a>
+    <div>
+        <a href="{{ route('warden.rooms.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostels
+        </a>
+    </div>
 </div>
 
 <!-- Hostel Info Card -->
@@ -26,13 +37,14 @@
                         <p><strong>Address:</strong> {{ $hostel->address }}</p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Total Room Types:</strong> {{ $hostel->roomTypes->count() }}</p>
-                        <p><strong>Total Rooms:</strong> {{ $hostel->rooms->count() }}</p>
                         <p><strong>Status:</strong> 
                             <span class="badge badge-{{ $hostel->status === 'active' ? 'success' : 'danger' }}">
                                 {{ ucfirst($hostel->status) }}
                             </span>
                         </p>
+                        <p><strong>Total Room Types:</strong> {{ $hostel->roomTypes->count() }}</p>
+                        <p><strong>Total Rooms:</strong> {{ $hostel->rooms->count() }}</p>
+                        <p><strong>Total Fees:</strong> ₹{{ number_format(method_exists($hostel, 'getTotalFeesForRoomType') ? $hostel->getTotalFeesForRoomType() : 0, 2) }}</p>
                     </div>
                 </div>
             </div>

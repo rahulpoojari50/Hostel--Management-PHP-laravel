@@ -3,7 +3,20 @@
 @section('title', 'Registered Students')
 
 @section('content')
+@php
+    $hostels = $allHostels;
+    $selectedHostelId = request('hostel_id') ?? ($hostels->count() === 1 ? $hostels->first()->id : $hostel->id ?? null);
+    $selectedHostel = $hostels->where('id', $selectedHostelId)->first();
+@endphp
 <div class="container-fluid py-4">
+    @include('components.breadcrumb', [
+        'pageTitle' => 'Registered Students',
+        'breadcrumbs' => [
+            ['name' => 'Home', 'url' => url('/')],
+            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Registered Students', 'url' => '']
+        ]
+    ])
     {{-- Remove the top Add Student and Bulk Upload Buttons --}}
     {{-- Add Student Modal --}}
     <div class="modal fade" id="addStudentModal" tabindex="-1" role="dialog" aria-labelledby="addStudentModalLabel" aria-hidden="true">
@@ -90,14 +103,79 @@
     </div>
     {{-- <h1 class="h3 mb-4 text-gray-800">Registered Students for Hostel: {{ $hostel->name }}</h1> --}}
 
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Registered Students',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
-            ['name' => 'Registered Students', 'url' => '']
-        ]
-    ])
+    {{-- Student Search Filters --}}
+    <div class="card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Student Search Filters</h5>
+      </div>
+      <form method="GET" action="" autocomplete="off">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="hostel_id">Select Hostel</label>
+            <select class="form-control" id="hostel_id" name="hostel_id" required onchange="this.form.submit()">
+              <option value="">-- Select Hostel --</option>
+              @foreach($hostels as $h)
+                <option value="{{ $h->id }}" {{ $selectedHostelId == $h->id ? 'selected' : '' }}>{{ $h->name }}</option>
+              @endforeach
+            </select>
+          </div>
+          @if($selectedHostel)
+          <div class="col-md-4 mb-3">
+            <label>Name</label>
+            <input type="text" name="name" class="form-control" placeholder="Enter Name" value="{{ request('name') }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>Room Type</label>
+            <select name="room_type" class="form-control">
+              <option value="">Select Room Type</option>
+              @if($selectedHostel->roomTypes)
+                @foreach($selectedHostel->roomTypes as $rt)
+                  <option value="{{ $rt->type }}" {{ request('room_type') == $rt->type ? 'selected' : '' }}>{{ $rt->type }}</option>
+                @endforeach
+              @endif
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>Email</label>
+            <input type="email" name="email" class="form-control" placeholder="Enter Email" value="{{ request('email') }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>Room No</label>
+            <input name="room_no" list="room_no_list" class="form-control" placeholder="Enter or select Room No" value="{{ request('room_no') }}">
+            <datalist id="room_no_list">
+              <option value="none">None</option>
+              @if($selectedHostel->roomApplications)
+                @php
+                  $roomNumbers = $selectedHostel->roomApplications->flatMap(function($app) use ($selectedHostel) {
+                    return optional($app->student)->roomAssignments->where('room.hostel_id', $selectedHostel->id)->pluck('room.room_number');
+                  })->unique()->filter();
+                @endphp
+                @foreach($roomNumbers as $roomNo)
+                  <option value="{{ $roomNo }}">{{ $roomNo }}</option>
+                @endforeach
+              @endif
+            </datalist>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>Category</label>
+            <select name="category" class="form-control">
+              <option value="">Select Category</option>
+              <option value="General" {{ request('category') == 'General' ? 'selected' : '' }}>General</option>
+              <option value="OBC" {{ request('category') == 'OBC' ? 'selected' : '' }}>OBC</option>
+              <option value="SC" {{ request('category') == 'SC' ? 'selected' : '' }}>SC</option>
+              <option value="ST" {{ request('category') == 'ST' ? 'selected' : '' }}>ST</option>
+              <option value="Other" {{ request('category') == 'Other' ? 'selected' : '' }}>Other</option>
+            </select>
+          </div>
+          @endif
+          <div class="col-md-4 d-flex align-items-end mb-3">
+            <button type="submit" class="btn btn-primary w-100">Search</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {{-- END Student Search Filters --}}
+
     <form method="POST" action="{{ route('warden.hostels.students.delete', $hostel->id) }}" id="deleteStudentsForm">
         @csrf
         @method('DELETE')
@@ -115,6 +193,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Room Type</th>
+                            <th>Hostel Name</th>
                             <th>Room No</th>
                             <th>Actions</th>
                         </tr>
@@ -130,6 +209,7 @@
                                 <td>{{ $student->name ?? '-' }}</td>
                                 <td>{{ $student->email ?? '-' }}</td>
                                 <td>{{ $app->roomType->type ?? '-' }}</td>
+                                <td>{{ $hostel->name }}</td>
                                 <td>{{ $assignment?->room->room_number ?? 'Pending Allotment' }}</td>
                                 <td>
                                     <a href="{{ route('warden.students.edit', $student->id) }}" class="btn btn-sm btn-warning" title="Edit Student">
