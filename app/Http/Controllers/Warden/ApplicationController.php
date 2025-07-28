@@ -53,6 +53,13 @@ class ApplicationController extends Controller
         }
 
         if ($action === 'approve') {
+            // Check if room_id is provided
+            if (!$request->has('room_id') || empty($request->input('room_id'))) {
+                // Redirect to room allotment page for room selection
+                return redirect()->route('warden.room-allotment.show', $application->id)
+                    ->with('info', 'Please select a room to complete the approval process.');
+            }
+            
             $request->validate([
                 'room_id' => ['required', 'exists:rooms,id'],
             ]);

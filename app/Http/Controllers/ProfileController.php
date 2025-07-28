@@ -32,6 +32,15 @@ class ProfileController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            $request->validate([
+                'photo' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+            $path = $request->file('photo')->store('photos', 'public');
+            $data['photo_path'] = $path; // Store photo in photo_path field
+        }
+        
         // Handle document upload
         if ($request->hasFile('document')) {
             $path = $request->file('document')->store('documents', 'public');

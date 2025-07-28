@@ -68,9 +68,9 @@
                                     <form class="user" method="POST" action="{{ route('login') }}">
                                         @csrf
                                         <div class="form-group">
-                                            <input type="email" class="form-control form-control-user @error('email') is-invalid @enderror"
+                                            <input type="text" class="form-control form-control-user @error('email') is-invalid @enderror"
                                                 id="email" name="email" value="{{ old('email') }}" required autofocus
-                                                placeholder="Enter Email Address...">
+                                                placeholder="Enter Email Address or USN...">
                                             @error('email')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror

@@ -71,6 +71,7 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>Student Name</th>
+                                <th>USN</th>
                                 <th>Status</th>
                                 <th>Remarks</th>
                             </tr>
@@ -79,7 +80,12 @@
                             @foreach($students as $student)
                                 @php $record = isset($records) ? $records->where('student_id', $student->id)->first() : null; @endphp
                                 <tr>
-                                    <td>{{ $student->name }}</td>
+                                    <td>
+                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $student->usn ?? '-' }}</td>
                                     <td class="text-center">
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}]" value="Taken" @if(optional($record)->status === 'Taken' || !$record) checked @endif @if($attendanceExists && empty($editMode)) disabled @endif>
@@ -140,4 +146,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+@include('components.student-profile-modal')
 @endsection 

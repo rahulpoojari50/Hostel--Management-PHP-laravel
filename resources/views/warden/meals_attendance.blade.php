@@ -86,6 +86,7 @@
                                 <thead class="thead-light">
                                     <tr>
                                         <th>Student Name</th>
+                                        <th>USN</th>
                                         <th>Breakfast</th>
                                         <th>Lunch</th>
                                         <th>Snacks</th>
@@ -96,7 +97,12 @@
                                 <tbody>
                                     @foreach($students as $student)
                                     <tr>
-                                        <td>{{ $student->name }}</td>
+                                        <td>
+                                            <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                                <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ $student->usn ?? '-' }}</td>
                                         @foreach(['Breakfast','Lunch','Snacks','Dinner'] as $meal)
                                         <td class="text-center">
                                             <div class="form-check form-check-inline">
@@ -172,6 +178,7 @@
                                 <thead class="thead-light">
                                     <tr>
                                         <th>Student Name</th>
+                                        <th>USN</th>
                                         <th>Breakfast</th>
                                         <th>Lunch</th>
                                         <th>Snacks</th>
@@ -182,7 +189,11 @@
                                 <tbody>
                                     @foreach($students as $student)
                                     <tr>
-                                        <td>{{ $student->name }}</td>
+                                        <td>
+                                            <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                                <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                            </a>
+                                        </td>
                                         @foreach(['Breakfast','Lunch','Snacks','Dinner'] as $meal)
                                         <td class="text-center">
                                             <div class="form-check form-check-inline">
@@ -235,6 +246,7 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>Student Name</th>
+                                    <th>USN</th>
                                     <th>Breakfast</th>
                                     <th>Lunch</th>
                                     <th>Snacks</th>
@@ -245,7 +257,12 @@
                             <tbody>
                                 @foreach($students as $student)
                                 <tr>
-                                    <td>{{ $student->name }}</td>
+                                    <td>
+                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $student->usn ?? '-' }}</td>
                                     @foreach(['Breakfast','Lunch','Snacks','Dinner'] as $meal)
                                     <td>
                                         @php $status = $attendance[$meal][$student->id] ?? null; @endphp
@@ -390,4 +407,6 @@ function formatDate(date) {
     }, 500);
 </script>
 @endif
+
+@include('components.student-profile-modal')
 @endsection 

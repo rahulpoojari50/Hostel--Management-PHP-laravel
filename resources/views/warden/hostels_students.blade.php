@@ -40,6 +40,10 @@
                 <input type="email" class="form-control" id="student_email" name="email" required>
               </div>
               <div class="form-group">
+                <label for="student_usn">USN</label>
+                <input type="text" class="form-control" id="student_usn" name="usn" required>
+              </div>
+              <div class="form-group">
                 <label for="student_phone">Phone</label>
                 <input type="text" class="form-control" id="student_phone" name="phone">
               </div>
@@ -191,6 +195,7 @@
                         <tr>
                             <th><input type="checkbox" id="selectAll"></th>
                             <th>Name</th>
+                            <th>USN</th>
                             <th>Email</th>
                             <th>Room Type</th>
                             <th>Hostel Name</th>
@@ -204,14 +209,26 @@
                                 $student = $app->student;
                                 $assignment = $student?->roomAssignments->where('room.hostel_id', $hostel->id)->first();
                             @endphp
-                            <tr>
-                                <td><input type="checkbox" name="student_ids[]" value="{{ $student->id }}"></td>
-                                <td>{{ $student->name ?? '-' }}</td>
+                                                <tr>
+                        <td><input type="checkbox" name="student_ids[]" value="{{ $student->id }}"></td>
+                        <td>
+                            @if($student)
+                                <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                    <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                </a>
+                            @else
+                                -
+                            @endif
+                        </td>
+                                <td>{{ $student->usn ?? '-' }}</td>
                                 <td>{{ $student->email ?? '-' }}</td>
                                 <td>{{ $app->roomType->type ?? '-' }}</td>
                                 <td>{{ $hostel->name }}</td>
                                 <td>{{ $assignment?->room->room_number ?? 'Pending Allotment' }}</td>
                                 <td>
+                                    <a href="{{ route('warden.students.show', $student->id) }}" class="btn btn-sm btn-info" title="View Profile">
+                                        <i class="fas fa-eye"></i> Profile
+                                    </a>
                                     <a href="{{ route('warden.students.edit', $student->id) }}" class="btn btn-sm btn-warning" title="Edit Student">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
@@ -260,4 +277,6 @@
         });
     });
 </script>
-@endpush 
+@endpush
+
+@include('components.student-profile-modal') 

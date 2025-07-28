@@ -90,6 +90,8 @@
         </div>
     </div>
 </div>
+
+@include('components.student-profile-modal')
 @endsection
 
 @push('scripts')

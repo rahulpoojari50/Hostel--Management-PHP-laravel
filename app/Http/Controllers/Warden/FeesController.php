@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\PendingFeesNotification;
 use App\Notifications\PendingFeeNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Response;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class FeesController extends Controller
 {
@@ -24,12 +31,13 @@ class FeesController extends Controller
     public function studentStatus(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel']);
+        $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                   ->orWhere('email', 'like', "%$search%")
+                  ->orWhere('usn', 'like', "%$search%")
                   ->orWhere('parent_email', 'like', "%$search%")
                   ;
             });
@@ -37,6 +45,165 @@ class FeesController extends Controller
         $students = $query->paginate($perPage)->appends($request->only('search', 'per_page'));
         $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
         return view('warden.fees.student_status', compact('students', 'feeTypes'));
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%")
+                  ->orWhere('usn', 'like', "%$search%")
+                  ->orWhere('parent_email', 'like', "%$search%")
+                  ;
+            });
+        }
+        $students = $query->get();
+        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+
+        $filename = 'student_fees_status_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        // Build CSV content as string
+        $csvContent = '';
+        
+                    // Write headers
+            $headerRow = ['Student Name', 'USN', 'Email', 'Parent Email', 'Hostel Name'];
+        foreach ($feeTypes as $type) {
+            $headerRow[] = ucwords(str_replace('_', ' ', $type)) . ' Status';
+            $headerRow[] = ucwords(str_replace('_', ' ', $type)) . ' Amount';
+        }
+        $csvContent .= implode(',', array_map(function($field) {
+            return '"' . str_replace('"', '""', $field) . '"';
+        }, $headerRow)) . "\n";
+
+        // Write data rows
+        foreach ($students as $student) {
+            $assignment = $student->roomAssignments->where('status', 'active')->first();
+            $hostelName = $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : '-';
+            
+                            $row = [
+                    $student->name,
+                    $student->usn ?? '-',
+                    $student->email,
+                    $student->studentProfile->father_email ?? $student->parent_email ?? '-',
+                    $hostelName
+                ];
+
+            foreach ($feeTypes as $type) {
+                $fee = $student->studentFees->where('fee_type', $type)->first();
+                $row[] = $fee ? ucfirst($fee->status) : '-';
+                $row[] = $fee ? number_format($fee->amount, 2) : '-';
+            }
+
+            $csvContent .= implode(',', array_map(function($field) {
+                return '"' . str_replace('"', '""', $field) . '"';
+            }, $row)) . "\n";
+        }
+
+        return response($csvContent, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%")
+                  ->orWhere('usn', 'like', "%$search%")
+                  ->orWhere('parent_email', 'like', "%$search%")
+                  ;
+            });
+        }
+        $students = $query->get();
+        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+
+        $data = [
+            'students' => $students,
+            'feeTypes' => $feeTypes,
+            'generatedAt' => now()->format('d M Y, h:i A')
+        ];
+
+        $pdf = Pdf::loadView('warden.fees.pdf.student_status', $data);
+        
+        return $pdf->download('student_fees_status_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    public function exportWord(Request $request)
+    {
+        $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%")
+                  ->orWhere('usn', 'like', "%$search%")
+                  ->orWhere('parent_email', 'like', "%$search%")
+                  ;
+            });
+        }
+        $students = $query->get();
+        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection();
+
+        // Add title
+        $section->addText('Student Fees Status Report', ['bold' => true, 'size' => 16]);
+        $section->addText('Generated on: ' . now()->format('d M Y, h:i A'), ['size' => 10]);
+        $section->addTextBreak(1);
+
+        // Create table
+        $table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000']);
+
+        // Add header row
+        $table->addRow();
+        $table->addCell(2000)->addText('Student Name', ['bold' => true]);
+        $table->addCell(1500)->addText('USN', ['bold' => true]);
+        $table->addCell(2000)->addText('Email', ['bold' => true]);
+        $table->addCell(2000)->addText('Parent Email', ['bold' => true]);
+        $table->addCell(2000)->addText('Hostel Name', ['bold' => true]);
+        
+        foreach ($feeTypes as $type) {
+            $table->addCell(1500)->addText(ucwords(str_replace('_', ' ', $type)) . ' Status', ['bold' => true]);
+            $table->addCell(1500)->addText(ucwords(str_replace('_', ' ', $type)) . ' Amount', ['bold' => true]);
+        }
+
+        // Add data rows
+        foreach ($students as $student) {
+            $assignment = $student->roomAssignments->where('status', 'active')->first();
+            $hostelName = $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : '-';
+            
+            $table->addRow();
+            $table->addCell(2000)->addText($student->name);
+            $table->addCell(1500)->addText($student->usn ?? '-');
+            $table->addCell(2000)->addText($student->email);
+            $table->addCell(2000)->addText($student->studentProfile->father_email ?? $student->parent_email ?? '-');
+            $table->addCell(2000)->addText($hostelName);
+
+            foreach ($feeTypes as $type) {
+                $fee = $student->studentFees->where('fee_type', $type)->first();
+                $table->addCell(1500)->addText($fee ? ucfirst($fee->status) : '-');
+                $table->addCell(1500)->addText($fee ? '₹' . number_format($fee->amount, 2) : '-');
+            }
+        }
+
+        // Save file
+        $filename = 'student_fees_status_' . date('Y-m-d_H-i-s') . '.docx';
+        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+        
+        $tempFile = tempnam(sys_get_temp_dir(), 'word_export');
+        $objWriter->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend();
     }
 
     public function notifyParents(Request $request)
@@ -48,7 +215,8 @@ class FeesController extends Controller
         $students = \App\Models\User::whereIn('id', $studentIds)->with('studentFees')->get();
         $notified = 0;
         foreach ($students as $student) {
-            $parentEmail = $student->parent_email;
+            // Try to get parent email from profile first, then fallback to user table
+            $parentEmail = $student->studentProfile->father_email ?? $student->studentProfile->mother_email ?? $student->parent_email;
             $pendingFees = $student->studentFees->where('status', 'pending');
             if ($parentEmail && $pendingFees->count()) {
                 Notification::route('mail', $parentEmail)

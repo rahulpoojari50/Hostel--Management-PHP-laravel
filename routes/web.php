@@ -110,10 +110,17 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('students/{student}/edit', [\App\Http\Controllers\Warden\StudentController::class, 'edit'])->name('students.edit');
+    Route::get('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'show'])->name('students.show');
     Route::put('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'update'])->name('students.update');
     Route::get('/fees', [App\Http\Controllers\Warden\FeesController::class, 'index'])->name('fees.index');
     Route::get('/fees/student-status', [App\Http\Controllers\Warden\FeesController::class, 'studentStatus'])->name('fees.student_status');
+    Route::get('/fees/student-status/export/csv', [App\Http\Controllers\Warden\FeesController::class, 'exportCsv'])->name('fees.student_status.export.csv');
+    Route::get('/fees/student-status/export/pdf', [App\Http\Controllers\Warden\FeesController::class, 'exportPdf'])->name('fees.student_status.export.pdf');
+    Route::get('/fees/student-status/export/word', [App\Http\Controllers\Warden\FeesController::class, 'exportWord'])->name('fees.student_status.export.word');
     Route::post('/warden/fees/notify-parents', [\App\Http\Controllers\Warden\FeesController::class, 'notifyParents'])->name('warden.fees.notify-parents');
+    
+    // AJAX route for student profile modal
+    Route::get('/students/{student}/profile-data', [\App\Http\Controllers\Warden\StudentController::class, 'getProfileData'])->name('students.profile-data');
 });
 
 Route::middleware(['auth', 'student'])->prefix('student')->name('student.')->group(function () {

@@ -126,7 +126,16 @@
                                                     <div class="mt-1">
                                                         <small class="text-muted">Occupants:</small><br>
                                                         @foreach($room['students'] as $student)
-                                                            <span class="badge badge-light">{{ $student }}</span>
+                                                            @php
+                                                                $studentId = $room['student_ids'][$loop->index] ?? null;
+                                                            @endphp
+                                                            @if($studentId)
+                                                                <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $studentId }}" style="text-decoration: none; cursor: pointer;">
+                                                                    <i class="fas fa-user mr-1"></i><span class="badge badge-light">{{ $student }}</span>
+                                                                </a>
+                                                            @else
+                                                                <span class="badge badge-light">{{ $student }}</span>
+                                                            @endif
                                                         @endforeach
                                                     </div>
                                                 @endif
@@ -212,4 +221,6 @@
         </div>
     </div>
 @endif
+
+@include('components.student-profile-modal')
 @endsection 

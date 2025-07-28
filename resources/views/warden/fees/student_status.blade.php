@@ -12,7 +12,7 @@
     ]
 ])
 <form method="GET" action="" class="mb-3 d-flex align-items-center flex-wrap" style="max-width: 600px;">
-    <input type="text" name="search" class="form-control mr-2" placeholder="Search student by name or email" value="{{ request('search') }}" style="max-width:200px;">
+                <input type="text" name="search" class="form-control mr-2" placeholder="Search by name, email, or USN" value="{{ request('search') }}" style="max-width:200px;">
     <button type="submit" class="btn btn-primary mr-2">Search</button>
     <div class="d-flex align-items-center" style="white-space:nowrap;">
         <label class="mb-0 mr-2">Show</label>
@@ -27,8 +27,19 @@
 <div class="row">
     <div class="col-lg-12">
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">All Students - Paid & Pending Fees</h6>
+                <div class="btn-group" role="group">
+                    <a href="{{ route('warden.fees.student_status.export.csv', request()->query()) }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </a>
+                    <a href="{{ route('warden.fees.student_status.export.pdf', request()->query()) }}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                    <a href="{{ route('warden.fees.student_status.export.word', request()->query()) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-file-word"></i> Word
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <form id="notify-form" method="POST" action="{{ route('warden.warden.fees.notify-parents') }}">
@@ -42,6 +53,7 @@
                                 <tr>
                                     <th><input type="checkbox" id="select-all"></th>
                                     <th>Student Name</th>
+                                    <th>USN</th>
                                     <th>Email</th>
                                     <th>Parent Email</th>
                                     <th>Hostel Name</th>
@@ -54,9 +66,14 @@
                             @foreach($students as $student)
                                 <tr>
                                     <td><input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="student-checkbox" onclick="event.stopPropagation();"></td>
-                                    <td>{{ $student->name }}</td>
+                                    <td>
+                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $student->usn ?? '-' }}</td>
                                     <td>{{ $student->email }}</td>
-                                    <td>{{ $student->parent_email ?? '-' }}</td>
+                                    <td>{{ $student->studentProfile->father_email ?? $student->parent_email ?? '-' }}</td>
                                     <td>
                                         @php
                                             $assignment = $student->roomAssignments->where('status', 'active')->first();
@@ -93,6 +110,10 @@
         </div>
     </div>
 </div>
+
+@include('components.student-profile-modal')
+
+
 @endsection
 @push('styles')
 <style>
@@ -118,5 +139,7 @@
         const checked = this.checked;
         document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = checked);
     });
+    
+
 </script>
 @endpush 

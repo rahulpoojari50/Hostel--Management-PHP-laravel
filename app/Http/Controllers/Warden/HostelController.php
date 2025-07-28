@@ -79,10 +79,10 @@ class HostelController extends Controller
                 'roomApplications.student',
                 'meals',
             ])->findOrFail($id);
-        // Get all students allotted rooms in this hostel
+        // Get all students allotted rooms in this hostel, paginated
         $students = \App\Models\User::whereHas('roomAssignments.room', function($q) use ($hostel) {
             $q->where('hostel_id', $hostel->id);
-        })->get();
+        })->paginate(10);
         return view('warden.hostels_show', compact('hostel', 'students'));
     }
 

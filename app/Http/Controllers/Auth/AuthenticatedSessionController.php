@@ -25,15 +25,31 @@ class AuthenticatedSessionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required'],
             'password' => ['required'],
             'role' => ['required', 'in:student,warden'],
         ]);
 
-        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password'], 'role' => $credentials['role']])) {
+        $loginField = $credentials['email'];
+        $password = $credentials['password'];
+        $role = $credentials['role'];
+
+        // Find user by email or USN
+        $user = null;
+        if (filter_var($loginField, FILTER_VALIDATE_EMAIL)) {
+            // It's an email
+            $user = \App\Models\User::where('email', $loginField)->where('role', $role)->first();
+        } else {
+            // It's a USN
+            $user = \App\Models\User::where('usn', $loginField)->where('role', $role)->first();
+        }
+
+        // Check if user exists and password is correct
+        if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+            Auth::login($user);
             $request->session()->regenerate();
 
-            if ($credentials['role'] === 'warden') {
+            if ($role === 'warden') {
                 return redirect('/warden/dashboard');
             } else {
                 return redirect('/student/dashboard');

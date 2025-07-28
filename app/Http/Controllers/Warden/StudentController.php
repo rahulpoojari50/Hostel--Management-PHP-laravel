@@ -27,6 +27,35 @@ class StudentController extends Controller
         return view('warden.students_edit', compact('student', 'assignment', 'availableRooms'));
     }
 
+    // View student profile and parent details
+    public function show($id)
+    {
+        $student = User::where('role', 'student')->findOrFail($id);
+        
+        // Get the student's current active room assignment
+        $assignment = $student->roomAssignments()->where('status', 'active')->with('room.hostel')->first();
+        
+        // Get student profile data
+        $profile = $student->studentProfile;
+        
+        // Get parent details from both profile and user table
+        $parentDetails = [
+            'father_name' => $profile->father_name ?? '-',
+            'father_occupation' => $profile->father_occupation ?? '-',
+            'father_email' => $profile->father_email ?? '-',
+            'father_mobile' => $profile->father_mobile ?? '-',
+            'mother_name' => $profile->mother_name ?? '-',
+            'mother_occupation' => $profile->mother_occupation ?? '-',
+            'mother_email' => $profile->mother_email ?? '-',
+            'mother_mobile' => $profile->mother_mobile ?? '-',
+            'parent_mobile' => $student->parent_mobile ?? '-',
+            'parent_email' => $student->parent_email ?? '-',
+            'alternate_mobile' => $student->alternate_mobile ?? '-',
+        ];
+        
+        return view('warden.students_show', compact('student', 'assignment', 'profile', 'parentDetails'));
+    }
+
     // Update the student info
     public function update(Request $request, $id)
     {
@@ -67,17 +96,76 @@ class StudentController extends Controller
             } else if ($assignment && $assignment->room) {
                 $hostelId = $assignment->room->hostel_id;
             }
-        } else {
-            // If not changing room, get hostel from current assignment
+        }
+        
+        return redirect()->back()->with('success', 'Student information updated successfully.');
+    }
+
+    // AJAX method to get student profile data for modal
+    public function getProfileData($id)
+    {
+        try {
+            \Log::info('getProfileData called with student ID: ' . $id);
+            
+            $student = User::where('role', 'student')->with(['studentProfile', 'roomAssignments.room.hostel'])->findOrFail($id);
+            
+            // Get the student's current active room assignment
             $assignment = $student->roomAssignments()->where('status', 'active')->first();
-            if ($assignment && $assignment->room) {
-                $hostelId = $assignment->room->hostel_id;
-            }
+            
+            // Get student profile data
+            $profile = $student->studentProfile;
+            
+            // Prepare data for modal
+            $data = [
+                'id' => $student->id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'usn' => $student->usn ?? 'Not Available',
+                'phone' => $student->phone ?? 'Not Available',
+                'address' => $student->address ?? 'Not Available',
+                'photo' => $this->getStudentPhoto($student),
+                'hostel_name' => $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : 'Not Assigned',
+                'room_number' => $assignment && $assignment->room ? $assignment->room->room_number : 'Not Assigned',
+                'room_type' => $assignment && $assignment->room && $assignment->room->roomType ? $assignment->room->roomType->type : 'Not Available',
+                'joining_date' => $assignment ? $assignment->assigned_date->format('d M Y') : 'Not Available',
+                'father_name' => $profile->father_name ?? 'Not Available',
+                'father_email' => $profile->father_email ?? 'Not Available',
+                'father_mobile' => $profile->father_mobile ?? 'Not Available',
+                'mother_name' => $profile->mother_name ?? 'Not Available',
+                'mother_email' => $profile->mother_email ?? 'Not Available',
+                'mother_mobile' => $profile->mother_mobile ?? 'Not Available',
+            ];
+            
+            \Log::info('Student profile data prepared:', $data);
+            
+            return response()->json($data);
+        } catch (\Exception $e) {
+            \Log::error('Error in getProfileData: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to load student data'], 500);
         }
-        if (!$hostelId) {
-            // fallback: get from request or student
-            $hostelId = $request->input('hostel_id') ?? null;
+    }
+
+    /**
+     * Get student photo URL
+     */
+    private function getStudentPhoto($student)
+    {
+        // Check if student profile has a photo_path (preferred)
+        if ($student->studentProfile && $student->studentProfile->photo_path && file_exists(storage_path('app/public/' . $student->studentProfile->photo_path))) {
+            return asset('storage/' . $student->studentProfile->photo_path);
         }
-        return redirect()->route('warden.hostels.students', $hostelId)->with('success', 'Student info updated successfully.');
+        
+        // Check if user has a document_path (photo)
+        if ($student->document_path && file_exists(storage_path('app/public/' . $student->document_path))) {
+            return asset('storage/' . $student->document_path);
+        }
+        
+        // Check if student profile has a document_path (photo) - legacy support
+        if ($student->studentProfile && $student->studentProfile->document_path && file_exists(storage_path('app/public/' . $student->studentProfile->document_path))) {
+            return asset('storage/' . $student->studentProfile->document_path);
+        }
+        
+        // Return default profile image
+        return asset('admin-assets/img/undraw_profile.svg');
     }
 } 

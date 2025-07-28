@@ -24,6 +24,7 @@
                         @forelse($students as $student)
                             <div class="mb-2">
                                 <strong>{{ $student->name }}</strong> ({{ $student->email }})<br>
+                                USN: {{ $student->usn ?? '-' }}<br>
                                 @php
                                     $assignment = $student->roomAssignments->where('status', 'active')->first();
                                     $hostelName = $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : '-';

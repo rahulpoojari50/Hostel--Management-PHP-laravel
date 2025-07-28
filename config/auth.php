@@ -65,6 +65,12 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
+        'custom_users' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'provider' => App\Providers\CustomUserProvider::class,
+        ],
+
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',

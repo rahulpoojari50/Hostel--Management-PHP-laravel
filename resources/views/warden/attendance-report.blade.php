@@ -95,6 +95,7 @@
                         <tr>
                             <th>S.No</th>
                             <th>Name</th>
+                            <th>USN</th>
                             <th>Email</th>
                             <th>Room</th>
                             <th>Hostel</th>
@@ -107,9 +108,14 @@
                     <tbody>
                         @php $serial = 1; @endphp
                         @foreach($students as $student)
-                            <tr class="align-middle">
-                                <td>{{ $serial++ }}</td>
-                                <td>{{ $student->name }}</td>
+                                                <tr class="align-middle">
+                        <td>{{ $serial++ }}</td>
+                        <td>
+                            <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                            </a>
+                        </td>
+                                <td>{{ $student->usn ?? '-' }}</td>
                                 <td>{{ $student->email }}</td>
                                 <td>{{ optional($student->roomAssignments->first()->room ?? null)->room_number }}</td>
                                 <td>{{ optional($student->roomAssignments->first()->room->hostel ?? null)->name }}</td>
@@ -163,6 +169,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>USN</th>
                             <th>Room Number</th>
                             <th>Email</th>
                             <th>Hostel Name</th>
@@ -171,8 +178,13 @@
                     <tbody>
                         @if(count($students))
                             @foreach($students as $student)
-                                <tr>
-                                    <td>{{ $student->name }}</td>
+                                                        <tr>
+                            <td>
+                                <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                    <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                </a>
+                            </td>
+                                    <td>{{ $student->usn ?? '-' }}</td>
                                     <td>{{ optional($student->roomAssignments->first()->room ?? null)->room_number }}</td>
                                     <td>{{ $student->email }}</td>
                                     <td>{{ optional($student->roomAssignments->first()->room->hostel ?? null)->name }}</td>
@@ -242,7 +254,11 @@
                                     }
                                 @endphp
                                 <tr>
-                                    <td class="sticky-col" style="left:0; background:#fff;">{{ $student->name }}</td>
+                                    <td class="sticky-col" style="left:0; background:#fff;">
+                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                        </a>
+                                    </td>
                                     <td class="sticky-col" style="left:120px; background:#fff;">{{ optional($student->roomAssignments->first()->room ?? null)->room_number }}</td>
                                     <td class="sticky-col" style="left:240px; background:#fff;">{{ $student->email }}</td>
                                     <td class="sticky-col" style="left:360px; background:#fff;">{{ optional($student->roomAssignments->first()->room->hostel ?? null)->name }}</td>
@@ -283,6 +299,8 @@
         </div>
     @endif
 @endif
+
+@include('components.student-profile-modal')
 @endsection 
 
 <style>

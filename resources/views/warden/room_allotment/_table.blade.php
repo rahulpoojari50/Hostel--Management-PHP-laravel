@@ -3,6 +3,7 @@
         <tr>
             <th><input type="checkbox" id="selectAllReject"></th>
             <th>Student Name</th>
+            <th>USN</th>
             <th>Email</th>
             <th>Hostel</th>
             <th>Room Type</th>
@@ -14,7 +15,16 @@
         @foreach($pendingApplications as $application)
             <tr>
                 <td><input type="checkbox" name="application_ids[]" value="{{ $application->id }}"></td>
-                <td>{{ $application->student->name ?? 'Unknown Student' }}</td>
+                <td>
+                    @if($application->student)
+                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $application->student->id }}" style="text-decoration: none; cursor: pointer;">
+                            <i class="fas fa-user mr-1"></i>{{ $application->student->name }}
+                        </a>
+                    @else
+                        Unknown Student
+                    @endif
+                </td>
+                <td>{{ $application->student->usn ?? '-' }}</td>
                 <td>{{ $application->student->email ?? '-' }}</td>
                 <td>{{ $application->hostel->name ?? 'Unknown Hostel' }}</td>
                 <td>{{ $application->roomType->type ?? 'Unknown Room Type' }}</td>

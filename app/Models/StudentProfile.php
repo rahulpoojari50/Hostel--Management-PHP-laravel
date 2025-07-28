@@ -18,6 +18,7 @@ class StudentProfile extends Model
         'present_state', 'present_city', 'present_address',
         'permanent_state', 'permanent_city', 'permanent_address',
         'document_path',
+        'photo_path',
         'email', 'phone',
     ];
 

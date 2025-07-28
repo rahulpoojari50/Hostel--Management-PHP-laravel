@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'usn',
         'password',
         'role',
         'phone',
@@ -103,6 +104,14 @@ class User extends Authenticatable
     public function mealAttendances()
     {
         return $this->hasMany(MealAttendance::class, 'student_id');
+    }
+
+    /**
+     * Get hostel attendance records for this student
+     */
+    public function hostelAttendances()
+    {
+        return $this->hasMany(HostelAttendance::class, 'student_id');
     }
 
     /**

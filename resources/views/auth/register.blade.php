@@ -17,6 +17,13 @@
                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
 
+            <!-- USN -->
+            <div class="mt-4">
+                <x-input-label for="usn" :value="__('USN (University Serial Number)')" />
+                <x-text-input id="usn" class="block mt-1 w-full" type="text" name="usn" :value="old('usn')" required />
+                <x-input-error :messages="$errors->get('usn')" class="mt-2" />
+            </div>
+
             <!-- Password -->
             <div class="mt-4">
                 <x-input-label for="password" :value="__('Password')" />

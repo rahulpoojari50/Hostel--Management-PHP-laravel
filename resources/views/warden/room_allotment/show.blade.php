@@ -22,7 +22,11 @@
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="font-weight-bold">Student Information</h6>
-                        <p><strong>Name:</strong> {{ $application->student->name }}</p>
+                        <p><strong>Name:</strong> 
+                            <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $application->student->id }}" style="text-decoration: none; cursor: pointer;">
+                                <i class="fas fa-user mr-1"></i>{{ $application->student->name }}
+                            </a>
+                        </p>
                         <p><strong>Email:</strong> {{ $application->student->email }}</p>
                         <p><strong>Phone:</strong> {{ $application->student->phone ?? 'Not provided' }}</p>
                         <p><strong>Address:</strong> {{ $application->student->address ?? 'Not provided' }}</p>
@@ -169,4 +173,6 @@
         </div>
     </div>
 @endif
+
+@include('components.student-profile-modal')
 @endsection 

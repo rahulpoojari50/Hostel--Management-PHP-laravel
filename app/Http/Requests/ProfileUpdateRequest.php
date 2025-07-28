@@ -59,6 +59,7 @@ class ProfileUpdateRequest extends FormRequest
             'permanent_address' => ['required', 'string', 'max:500'],
             'address' => ['nullable', 'string', 'max:255'],
             'document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ];
     }
 }

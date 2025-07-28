@@ -155,7 +155,8 @@ class RoomController extends Controller
                     'max_occupants' => $maxOccupants,
                     'status' => $status,
                     'color' => $color,
-                    'students' => $room->roomAssignments->where('status', 'active')->pluck('student.name')->toArray()
+                    'students' => $room->roomAssignments->where('status', 'active')->pluck('student.name')->toArray(),
+                    'student_ids' => $room->roomAssignments->where('status', 'active')->pluck('student.id')->toArray()
                 ];
             });
             

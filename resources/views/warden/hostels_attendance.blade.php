@@ -79,6 +79,7 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>Student Name</th>
+                                <th>USN</th>
                                 <th>Status</th>
                                 <th>Remarks</th>
                             </tr>
@@ -90,8 +91,13 @@
                                 $status = $record->status ?? null;
                                 $remarks = $record->remarks ?? '';
                             @endphp
-                            <tr>
-                                <td>{{ $student->name }}</td>
+                                                            <tr>
+                                    <td>
+                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                        </a>
+                                    </td>
+                                <td>{{ $student->usn ?? '-' }}</td>
                                 <td>
                                     @if($status === 'Taken')
                                         <span class="badge badge-success">P</span>

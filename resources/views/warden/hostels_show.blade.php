@@ -86,7 +86,7 @@
                     <table class="table table-bordered mb-0">
                         <thead class="thead-light">
                             <tr>
-                                <th>Name</th><th>Email</th><th>Room Type</th><th>Room No</th><th>Floor No</th>
+                                <th>Name</th><th>USN</th><th>Email</th><th>Room Type</th><th>Room No</th><th>Floor No</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -95,18 +95,26 @@
                                     $assignment = $student->roomAssignments->where('room.hostel_id', $hostel->id)->first();
                                 @endphp
                                 <tr>
-                                    <td>{{ $student->name }}</td>
+                                    <td>
+                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $student->usn ?? '-' }}</td>
                                     <td>{{ $student->email }}</td>
                                     <td>{{ $assignment->room->roomType->type ?? '-' }}</td>
                                     <td>{{ $assignment->room->room_number ?? '-' }}</td>
                                     <td>{{ $assignment->room->floor ?? '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center">No students allotted rooms.</td></tr>
+                                <tr><td colspan="6" class="text-center">No students allotted rooms.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                {{ $students->links('pagination::bootstrap-4') }}
             </div>
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
@@ -170,4 +178,6 @@
         </div>
     </div>
 </div>
+
+@include('components.student-profile-modal')
 @endsection

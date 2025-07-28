@@ -21,6 +21,7 @@
                         <thead>
                             <tr>
                                 <th>Student</th>
+                                <th>USN</th>
                                 <th>Hostel</th>
                                 <th>Room Type</th>
                                 <th>Date</th>
@@ -31,7 +32,16 @@
                         <tbody>
                             @forelse($applications as $app)
                                 <tr>
-                                    <td>{{ $app->student->name ?? '-' }}</td>
+                                    <td>
+                                        @if($app->student)
+                                            <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $app->student->id }}" style="text-decoration: none; cursor: pointer;">
+                                                <i class="fas fa-user mr-1"></i>{{ $app->student->name }}
+                                            </a>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>{{ $app->student->usn ?? '-' }}</td>
                                     <td>{{ $app->hostel->name ?? '-' }}</td>
                                     <td>{{ $app->roomType->type ?? '-' }}</td>
                                     <td>{{ $app->application_date }}</td>
@@ -43,14 +53,10 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             @if($app->status == 'pending')
-                                                <form action="{{ route('warden.applications.update', $app) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <input type="hidden" name="action" value="approve">
-                                                    <button type="submit" class="btn btn-success btn-sm" title="Approve">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                </form>
+                                                <a href="{{ route('warden.room-allotment.show', $app->id) }}" 
+                                                   class="btn btn-success btn-sm" title="Approve & Allot Room">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
                                                 <form action="{{ route('warden.applications.update', $app) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('PUT')
@@ -69,7 +75,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">
+                                    <td colspan="7" class="text-center text-muted">
                                         <i class="fas fa-inbox fa-2x mb-2"></i><br>
                                         No applications found.
                                     </td>
@@ -82,6 +88,8 @@
         </div>
     </div>
 </div>
+
+@include('components.student-profile-modal')
 @endsection
 
 @push('scripts')

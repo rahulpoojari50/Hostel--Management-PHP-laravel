@@ -61,6 +61,17 @@
                                 <tr><th>Permanent State</th><td>{{ $profile->permanent_state ?? '-' }}</td></tr>
                                 <tr><th>Permanent City</th><td>{{ $profile->permanent_city ?? '-' }}</td></tr>
                                 <tr><th>Permanent Address</th><td>{{ $profile->permanent_address ?? '-' }}</td></tr>
+                                <tr><th>Profile Photo</th><td>
+                                    @if($profile && ($profile->photo_path || $profile->document_path))
+                                        @php
+                                            $photoPath = $profile->photo_path ? $profile->photo_path : $profile->document_path;
+                                        @endphp
+                                        <img src="{{ asset('storage/' . $photoPath) }}" alt="Profile Photo" class="img-thumbnail rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <a href="{{ asset('storage/' . $photoPath) }}" target="_blank" class="ml-2">View Photo</a>
+                                    @else
+                                        <span class="text-muted">No photo uploaded</span>
+                                    @endif
+                                </td></tr>
                                 <tr><th>Document</th><td>@if($profile && $profile->document_path)<a href="{{ asset('storage/' . $profile->document_path) }}" target="_blank">View Document</a>@else - @endif</td></tr>
                             </tbody>
                         </table>
@@ -242,13 +253,43 @@
                                 <input type="text" name="permanent_address" class="form-control" value="{{ old('permanent_address', $profile->permanent_address ?? '') }}" required readonly>
         </div>
         </div>
+                        <!-- Photo Upload -->
+                        <div class="mb-4 mt-4">
+                            <label><i class="fas fa-camera"></i> Upload Profile Photo (optional)</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*" disabled>
+                            <small class="text-muted">Upload a clear photo of yourself (JPG, PNG, GIF - Max 2MB)</small>
+                            @if($profile && ($profile->photo_path || $profile->document_path))
+                                <div class="mt-2">
+                                    @php
+                                        $photoPath = $profile->photo_path ? $profile->photo_path : $profile->document_path;
+                                    @endphp
+                                    <img src="{{ asset('storage/' . $photoPath) }}" alt="Current Photo" class="img-thumbnail rounded-circle" style="max-width: 150px; height: 150px; object-fit: cover;">
+                                    <br>
+                                    <a href="{{ asset('storage/' . $photoPath) }}" target="_blank" class="text-blue-600 underline">View Current Photo</a>
+                                </div>
+                            @else
+                                <div class="mt-2">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                                        <i class="fas fa-user fa-3x text-muted"></i>
+                                    </div>
+                                    <small class="text-muted">No photo uploaded yet</small>
+                                </div>
+                            @endif
+                        </div>
                         <!-- Document Upload -->
                         <div class="mb-4 mt-4">
-                            <label>Upload Document (optional)</label>
-                            <input type="file" name="document" class="form-control" disabled>
+                            <label><i class="fas fa-file-alt"></i> Upload Document (optional)</label>
+                            <input type="file" name="document" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" disabled>
+                            <small class="text-muted">Upload any supporting documents (PDF, DOC, Images - Max 2MB)</small>
                             @if($profile && $profile->document_path)
-                <div class="mt-2">
-                                    <a href="{{ asset('storage/' . $profile->document_path) }}" target="_blank" class="text-blue-600 underline">Download Current Document</a>
+                                <div class="mt-2">
+                                    <a href="{{ asset('storage/' . $profile->document_path) }}" target="_blank" class="text-blue-600 underline">
+                                        <i class="fas fa-download"></i> Download Current Document
+                                    </a>
+                                </div>
+                            @else
+                                <div class="mt-2">
+                                    <small class="text-muted">No document uploaded yet</small>
                                 </div>
                             @endif
                         </div>
