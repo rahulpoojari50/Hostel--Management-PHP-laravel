@@ -28,6 +28,60 @@ class FeesController extends Controller
         return view('warden.fees.index', compact('hostel'));
     }
 
+    public function createMissingFees($hostelId)
+    {
+        $hostel = Hostel::where('warden_id', auth()->id())->findOrFail($hostelId);
+        
+        if (!$hostel->fees || !is_array($hostel->fees)) {
+            return redirect()->back()->with('error', 'No fees defined for this hostel.');
+        }
+        
+        // Get all students in this hostel
+        $students = User::whereHas('roomAssignments.room', function($q) use ($hostel) {
+            $q->where('hostel_id', $hostel->id);
+        })->get();
+        
+        $createdFees = 0;
+        $existingFees = 0;
+        
+        foreach ($students as $student) {
+            foreach ($hostel->fees as $fee) {
+                // Check if this fee type already exists for this student
+                $existingFee = StudentFee::where('student_id', $student->id)
+                    ->where('hostel_id', $hostel->id)
+                    ->where('fee_type', $fee['type'])
+                    ->first();
+                
+                // Only create if it doesn't exist
+                if (!$existingFee) {
+                    StudentFee::create([
+                        'student_id' => $student->id,
+                        'hostel_id' => $hostel->id,
+                        'fee_type' => $fee['type'],
+                        'amount' => $fee['amount'],
+                        'status' => 'pending',
+                    ]);
+                    $createdFees++;
+                } else {
+                    $existingFees++;
+                }
+            }
+        }
+        
+        $message = "Fee creation completed. ";
+        if ($createdFees > 0) {
+            $message .= "Created {$createdFees} new pending fee(s) for {$students->count()} student(s). ";
+        }
+        if ($existingFees > 0) {
+            $message .= "{$existingFees} fee(s) already existed. ";
+        }
+        if ($createdFees === 0 && $existingFees === 0) {
+            $message .= "No new fees were created (all fees already exist).";
+        }
+        
+        return redirect()->back()->with('success', $message);
+    }
+
     public function studentStatus(Request $request)
     {
         $perPage = $request->input('per_page', 10);

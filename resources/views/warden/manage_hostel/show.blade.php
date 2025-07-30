@@ -10,8 +10,9 @@
         <a href="{{ route('warden.manage-hostel.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostels
         </a>
-        <button type="button" class="btn btn-success btn-sm ml-2" data-toggle="modal" data-target="#addRoomTypeModal">
-            <i class="fas fa-plus"></i> Add Room Type
+      
+        <button type="button" class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#addRoomsModal">
+            <i class="fas fa-bed"></i> Add Rooms
         </button>
     </div>
 </div>
@@ -23,40 +24,113 @@
       <form method="POST" action="{{ route('warden.hostels.room-types.store', $hostel) }}">
         @csrf
         <div class="modal-header">
-          <h5 class="modal-title" id="addRoomTypeModalLabel">Add Room Type</h5>
+          <h5 class="modal-title" id="addRoomTypeModalLabel">Add Custom Room Type</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Predefined Room Types Status -->
+          <div class="alert alert-info">
+            <h6 class="font-weight-bold">Predefined Room Types Status:</h6>
+            @php
+                $existingTypes = $hostel->roomTypes()->pluck('type')->toArray();
+                $predefinedTypes = ['Single Sharing', 'Double Sharing', 'Triple Sharing', 'Four Sharing'];
+            @endphp
+            <div class="row">
+                @foreach($predefinedTypes as $type)
+                    <div class="col-6">
+                        @if(in_array($type, $existingTypes))
+                            <span class="badge badge-success"><i class="fas fa-check"></i> {{ $type }}</span>
+                        @else
+                            <span class="badge badge-secondary"><i class="fas fa-times"></i> {{ $type }}</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+            <small class="text-muted mt-2 d-block">Predefined room types are automatically created. You can only add custom room types here.</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="roomType">Custom Room Type Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="customRoomType" name="type" placeholder="e.g. Deluxe Single, Premium Double, Executive Suite, etc." required>
+            <small class="form-text text-muted">Enter a unique name for your custom room type</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="capacity">Capacity (Number of Students per Room) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="capacity" name="capacity" min="1" max="20" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="price_per_month">Price per Month (₹) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="price_per_month" name="price_per_month" min="0" step="0.01" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="total_rooms">Total Rooms <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="total_rooms" name="total_rooms" min="1" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="facilities">Facilities (comma separated)</label>
+            <input type="text" class="form-control" id="facilities" name="facilities" placeholder="AC, WiFi, Attached Bathroom, etc.">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Custom Room Type</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Rooms Modal -->
+<div class="modal fade" id="addRoomsModal" tabindex="-1" role="dialog" aria-labelledby="addRoomsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{{ route('warden.manage-hostel.add-rooms', $hostel) }}">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title" id="addRoomsModalLabel">Add Rooms to Existing Room Type</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label for="roomType">Type</label>
-            <input type="text" class="form-control" id="roomType" name="type" placeholder="e.g. Single, Double, Triple, Quad" required>
+            <label for="room_type_id">Select Room Type <span class="text-danger">*</span></label>
+            <select class="form-control" id="room_type_id" name="room_type_id" required>
+              <option value="">Choose a room type...</option>
+              @foreach($hostel->roomTypes as $roomType)
+                <option value="{{ $roomType->id }}" data-capacity="{{ $roomType->capacity }}" data-price="{{ $roomType->price_per_month }}">
+                  {{ $roomType->type }} (Capacity: {{ $roomType->capacity }}, Price: ₹{{ number_format($roomType->price_per_month, 2) }}/month)
+                </option>
+              @endforeach
+            </select>
+            <small class="form-text text-muted">Select the room type you want to add rooms to</small>
           </div>
+          
           <div class="form-group">
-            <label for="capacity">Capacity</label>
-            <input type="number" class="form-control" id="capacity" name="capacity" min="1" max="20" required>
+            <label for="number_of_rooms">Number of Rooms to Add <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="number_of_rooms" name="number_of_rooms" min="1" max="10" required>
+            <small class="form-text text-muted">Enter how many rooms you want to add to this room type (max 10 at once)</small>
           </div>
-          <div class="form-group">
-            <label for="price_per_month">Price per Month</label>
-            <input type="number" class="form-control" id="price_per_month" name="price_per_month" required>
-          </div>
-          <div class="form-group">
-            <label for="total_rooms">Total Rooms</label>
-            <input type="number" class="form-control" id="total_rooms" name="total_rooms" required>
-          </div>
-          <div class="form-group">
-            <label for="available_rooms">Available Rooms</label>
-            <input type="number" class="form-control" id="available_rooms" name="available_rooms" required>
-          </div>
-          <div class="form-group">
-            <label for="facilities">Facilities (comma separated)</label>
-            <input type="text" class="form-control" id="facilities" name="facilities" placeholder="AC, WiFi, etc.">
+          
+          <div class="alert alert-info">
+            <h6 class="font-weight-bold"><i class="fas fa-info-circle"></i> Room Information:</h6>
+            <ul class="mb-0">
+                                       <li>Each room will have the same capacity and price as the selected room type</li>
+                         <li>You will be prompted to enter floor and room numbers for each room</li>
+                         <li>All new rooms will be set as "Available" status</li>
+                         <li>You can edit room details later from the rooms management section</li>
+            </ul>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Room Type</button>
+          <button type="submit" class="btn btn-primary">Add Rooms</button>
         </div>
       </form>
     </div>
@@ -174,6 +248,139 @@
                     </button>
                 </form>
                 @endif
+
+                @if(isset($pendingAddRooms))
+                <!-- Step 2: Add Room Details Form -->
+                <div class="card mt-4 border-primary">
+                    <div class="card-header py-3 bg-primary text-white">
+                        <h6 class="m-0 font-weight-bold">
+                            <i class="fas fa-bed"></i> Add Room Details - Step 2
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6 class="font-weight-bold">Room Type Information:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Room Type:</strong> {{ $pendingAddRooms['room_type_name'] }}</li>
+                                <li><strong>Capacity:</strong> {{ $pendingAddRooms['capacity'] }} students</li>
+                                <li><strong>Price:</strong> ₹{{ number_format($pendingAddRooms['price_per_month'], 2) }}/month</li>
+                                <li><strong>Number of Rooms:</strong> {{ $pendingAddRooms['number_of_rooms'] }}</li>
+                            </ul>
+                        </div>
+                        
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                        
+                        <form action="{{ route('warden.manage-hostel.store-rooms-details', $hostel) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="room_type_id" value="{{ $pendingAddRooms['room_type_id'] }}">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Room #</th>
+                                            <th>Room Number <span class="text-danger">*</span></th>
+                                            <th>Floor Number <span class="text-danger">*</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for($i = 0; $i < $pendingAddRooms['number_of_rooms']; $i++)
+                                        <tr>
+                                            <td class="align-middle">
+                                                <span class="badge badge-primary">{{ $i + 1 }}</span>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="rooms[{{ $i }}][room_number]" 
+                                                       class="form-control" placeholder="e.g. 101, A1, etc." required>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="rooms[{{ $i }}][floor_number]" 
+                                                       class="form-control" placeholder="e.g. 1, 2, Ground, etc." required>
+                                            </td>
+                                        </tr>
+                                        @endfor
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6 class="font-weight-bold"><i class="fas fa-exclamation-triangle"></i> Important Notes:</h6>
+                                <ul class="mb-0">
+                                    <li>Room numbers must be unique for this room type</li>
+                                    <li>You can use any format: numbers (101, 102), letters (A1, A2), or combinations</li>
+                                    <li>Floor numbers can be numbers or text (1, 2, Ground, First, etc.)</li>
+                                    <li>All rooms will be set as "Available" status</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-save"></i> Save Rooms
+                                </button>
+                                <a href="{{ route('warden.manage-hostel.show', $hostel) }}" class="btn btn-secondary btn-lg ml-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Room Management Section -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-bed"></i> Room Management
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-left-primary">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-primary">Add Rooms to Existing Room Types</h6>
+                                <p class="text-muted">Add more rooms to room types you've already created.</p>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addRoomsModal">
+                                    <i class="fas fa-plus"></i> Add Rooms
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-left-success">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-success">Room Statistics</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h4 class="text-primary">{{ $hostel->rooms->count() }}</h4>
+                                            <small class="text-muted">Total Rooms</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h4 class="text-success">{{ $hostel->rooms->where('status', 'available')->count() }}</h4>
+                                            <small class="text-muted">Available Rooms</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -281,7 +488,7 @@
     <!-- End Add Fees Section -->
 
     <!-- Update Meals Menu -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-lg-12 mb-4">
         <div class="card shadow">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Update Meals Menu</h6>
@@ -291,39 +498,63 @@
                     @csrf
                     <div class="form-group">
                         <label for="menu">Weekly Menu</label>
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Day</th>
-                                        <th>Breakfast</th>
-                                        <th>Lunch</th>
-                                        <th>Snacks</th>
-                                        <th>Dinner</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-                                        $mealTypes = ['breakfast','lunch','snacks','dinner'];
-                                        $menu = is_array($hostel->menu) ? $hostel->menu : (json_decode($hostel->menu, true) ?? []);
-                                    @endphp
-                                    @foreach($days as $day)
-                                    <tr>
-                                        <td><strong>{{ $day }}</strong></td>
-                                        @foreach($mealTypes as $meal)
-                                        <td>
-                                            <input type="text" class="form-control" name="menu[{{ $day }}][{{ $meal }}]" value="{{ $menu[$day][$meal] ?? '' }}" placeholder="-">
-                                        </td>
+                        
+                        <!-- Desktop/Tablet View -->
+                        <div class="d-none d-md-block">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm meals-table">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="min-width: 80px;">Day</th>
+                                            <th style="min-width: 120px;">Breakfast</th>
+                                            <th style="min-width: 120px;">Lunch</th>
+                                            <th style="min-width: 120px;">Snacks</th>
+                                            <th style="min-width: 120px;">Dinner</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php
+                                            $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                                            $mealTypes = ['breakfast','lunch','snacks','dinner'];
+                                            $menu = $hostel->menu ?? [];
+                                        @endphp
+                                        @foreach($days as $day)
+                                        <tr>
+                                            <td class="align-middle"><strong>{{ $day }}</strong></td>
+                                            @foreach($mealTypes as $meal)
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" name="menu[{{ $day }}][{{ $meal }}]" value="{{ $menu[$day][$meal] ?? '' }}" placeholder="-">
+                                            </td>
+                                            @endforeach
+                                        </tr>
                                         @endforeach
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <small class="form-text text-muted">Fill in the menu for each meal and day.</small>
+                        
+                        <!-- Mobile View -->
+                        <div class="d-md-none">
+                            @foreach($days as $day)
+                            <div class="card mb-3">
+                                <div class="card-header py-2">
+                                    <h6 class="mb-0 font-weight-bold">{{ $day }}</h6>
+                                </div>
+                                <div class="card-body py-2">
+                                    @foreach($mealTypes as $meal)
+                                    <div class="form-group mb-2">
+                                        <label class="small mb-1">{{ ucfirst($meal) }}</label>
+                                        <input type="text" class="form-control form-control-sm" name="menu[{{ $day }}][{{ $meal }}]" value="{{ $menu[$day][$meal] ?? '' }}" placeholder="-">
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        
+                        <small class="form-text text-muted">Fill in the menu for each meal and day. Use short descriptions for better fit.</small>
                     </div>
-                    <button type="submit" class="btn btn-info">
+                    <button type="submit" class="btn btn-info btn-sm">
                         <i class="fas fa-utensils fa-sm"></i> Update Menu
                     </button>
                 </form>
@@ -395,7 +626,7 @@
                                                     <!-- Edit Room Modal Trigger -->
                                                     <a href="#" data-toggle="modal" data-target="#editRoomModal{{ $room->id }}" title="Edit"><i class="fas fa-edit text-primary ml-1"></i></a>
                                                     <!-- Delete Room Form -->
-                                                    <form action="{{ route('warden.warden.rooms.destroy', [$hostel->id, $room->id]) }}" method="POST" style="display:inline;">
+                                                    <form action="{{ route('warden.rooms.destroy', [$hostel->id, $room->id]) }}" method="POST" style="display:inline;">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-link p-0 m-0 align-baseline" onclick="return confirm('Delete room {{ $room->room_number }}?')" title="Delete"><i class="fas fa-trash text-danger ml-1"></i></button>
@@ -405,7 +636,7 @@
                                                 <div class="modal fade" id="editRoomModal{{ $room->id }}" tabindex="-1" role="dialog" aria-labelledby="editRoomModalLabel{{ $room->id }}" aria-hidden="true">
                                                     <div class="modal-dialog" role="document">
                                                         <div class="modal-content">
-                                                            <form action="{{ route('warden.warden.rooms.update', [$hostel->id, $room->id]) }}" method="POST">
+                                                            <form action="{{ route('warden.rooms.update', [$hostel->id, $room->id]) }}" method="POST">
                                                                 @csrf
                                                                 @method('PUT')
                                                                 <div class="modal-header">
@@ -451,7 +682,7 @@
                                             <div class="modal fade" id="editRoomTypeModal{{ $roomType->id }}" tabindex="-1" role="dialog" aria-labelledby="editRoomTypeModalLabel{{ $roomType->id }}" aria-hidden="true">
                                                 <div class="modal-dialog" role="document">
                                                     <div class="modal-content">
-                                                        <form action="{{ route('warden.room-types.update', $roomType->id) }}" method="POST">
+                                                        <form action="{{ route('warden.hostels.room-types.update', [$hostel, $roomType]) }}" method="POST">
                                                             @csrf
                                                             @method('PUT')
                                                             <div class="modal-header">
@@ -506,6 +737,57 @@
 </div>
 @endsection 
 @push('scripts')
+<style>
+    /* Custom styles for meals menu */
+    .meals-table {
+        font-size: 0.875rem;
+    }
+    
+    .meals-table th,
+    .meals-table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+    
+    .meals-table input {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .meals-table {
+            font-size: 0.75rem;
+        }
+        
+        .meals-table th,
+        .meals-table td {
+            padding: 0.25rem;
+        }
+        
+        .meals-table input {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .meals-table {
+            font-size: 0.7rem;
+        }
+        
+        .meals-table th,
+        .meals-table td {
+            padding: 0.2rem;
+        }
+        
+        .meals-table input {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.3rem;
+        }
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         let feeIndex = 0;
@@ -540,6 +822,86 @@
             section.appendChild(row);
             row.querySelector('.remove-fee-btn').addEventListener('click', function() {
                 row.remove();
+            });
+        }
+
+        // Add Rooms Modal functionality
+        const roomTypeSelect = document.getElementById('room_type_id');
+        const numberOfRoomsInput = document.getElementById('number_of_rooms');
+        
+        if (roomTypeSelect) {
+            roomTypeSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.value) {
+                    const capacity = selectedOption.getAttribute('data-capacity');
+                    const price = selectedOption.getAttribute('data-price');
+                    
+                    // Update the info alert with selected room type details
+                    const infoAlert = document.querySelector('#addRoomsModal .alert-info ul');
+                    if (infoAlert) {
+                        infoAlert.innerHTML = `
+                            <li>Room Type: <strong>${selectedOption.text.split(' (')[0]}</strong></li>
+                            <li>Capacity: <strong>${capacity} students</strong></li>
+                            <li>Price: <strong>₹${parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2})}/month</strong></li>
+                            <li>Each room will have the same capacity and price as the selected room type</li>
+                            <li>Room numbers and floor numbers will be assigned automatically</li>
+                            <li>All new rooms will be set as "Available" status</li>
+                            <li>You can edit room details later from the rooms management section</li>
+                        `;
+                    }
+                }
+            });
+        }
+
+        // Validate number of rooms input
+        if (numberOfRoomsInput) {
+            numberOfRoomsInput.addEventListener('input', function() {
+                const value = parseInt(this.value);
+                if (value > 10) {
+                    this.value = 10;
+                    alert('Maximum 10 rooms can be added at once for better control.');
+                }
+            });
+        }
+
+        // Form validation for room details
+        const roomForm = document.querySelector('form[action*="store-rooms-details"]');
+        if (roomForm) {
+            roomForm.addEventListener('submit', function(e) {
+                const roomInputs = this.querySelectorAll('input[name*="[room_number]"]');
+                const floorInputs = this.querySelectorAll('input[name*="[floor_number]"]');
+                const roomNumbers = [];
+                const floorNumbers = [];
+                
+                // Collect all room and floor numbers
+                roomInputs.forEach((input, index) => {
+                    const roomNumber = input.value.trim();
+                    const floorNumber = floorInputs[index].value.trim();
+                    
+                    if (roomNumber && floorNumber) {
+                        const key = `${roomNumber}-${floorNumber}`;
+                        if (roomNumbers.includes(key)) {
+                            e.preventDefault();
+                            alert(`Duplicate room found: Room ${roomNumber} on floor ${floorNumber}. Please use unique room numbers.`);
+                            return;
+                        }
+                        roomNumbers.push(key);
+                    }
+                });
+                
+                // Check for empty fields
+                let hasEmptyFields = false;
+                roomInputs.forEach((input, index) => {
+                    if (!input.value.trim() || !floorInputs[index].value.trim()) {
+                        hasEmptyFields = true;
+                    }
+                });
+                
+                if (hasEmptyFields) {
+                    e.preventDefault();
+                    alert('Please fill in all room numbers and floor numbers.');
+                    return;
+                }
             });
         }
     });

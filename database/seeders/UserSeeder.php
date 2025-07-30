@@ -17,6 +17,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Default Warden',
             'email' => 'warden@example.com',
+            'usn' => 'WARDEN001',
             'password' => Hash::make('password'),
             'role' => 'warden',
             'phone' => '1234567890',
@@ -26,6 +27,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Warden One',
             'email' => 'warden1@example.com',
+            'usn' => 'WARDEN002',
             'password' => Hash::make('password'),
             'role' => 'warden',
             'phone' => '1234567890',
@@ -34,6 +36,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Warden Two',
             'email' => 'warden2@example.com',
+            'usn' => 'WARDEN003',
             'password' => Hash::make('password'),
             'role' => 'warden',
             'phone' => '1234567891',
@@ -44,6 +47,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Student One',
             'email' => 'student1@example.com',
+            'usn' => 'STU001',
             'password' => Hash::make('password'),
             'role' => 'student',
             'phone' => '9876543210',
@@ -52,6 +56,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Student Two',
             'email' => 'student2@example.com',
+            'usn' => 'STU002',
             'password' => Hash::make('password'),
             'role' => 'student',
             'phone' => '9876543211',

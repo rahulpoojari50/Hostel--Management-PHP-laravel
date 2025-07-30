@@ -43,8 +43,8 @@
                                     <td>{{ $student->phone ?? '-' }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Address:</strong></td>
-                                    <td>{{ $student->address ?? '-' }}</td>
+                                    <td><strong>Permanent Address:</strong></td>
+                                    <td>{{ $profile->permanent_address ?? '-' }}</td>
                                 </tr>
                                 @if($profile)
                                 <tr>

@@ -93,4 +93,28 @@ class Room extends Model
     {
         return $this->max_occupants - $this->current_occupants;
     }
+
+    /**
+     * Check if room number is unique on the same floor for the hostel
+     */
+    public static function isRoomNumberUniqueOnFloor($hostelId, $roomNumber, $floor, $excludeRoomId = null)
+    {
+        $query = self::where('hostel_id', $hostelId)
+            ->where('room_number', $roomNumber)
+            ->where('floor', $floor);
+        
+        if ($excludeRoomId) {
+            $query->where('id', '!=', $excludeRoomId);
+        }
+        
+        return !$query->exists();
+    }
+
+    /**
+     * Get validation error message for duplicate room number
+     */
+    public static function getDuplicateRoomErrorMessage($roomNumber, $floor)
+    {
+        return "Room number '{$roomNumber}' already exists on floor {$floor}. Please choose a different room number.";
+    }
 }

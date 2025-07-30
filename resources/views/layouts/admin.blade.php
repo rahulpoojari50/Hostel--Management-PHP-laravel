@@ -89,23 +89,12 @@
                         <i class="fas fa-fw fa-user"></i>
                         <span>Profile</span></a>
                 </li>
-                <!-- Fees Parent Menu -->
-                @php
-                    $feesActive = request()->routeIs('student.fees.*');
-                @endphp
-                <li class="nav-item has-sub">
-                    <a href="#feesSubmenu" class="nav-link" data-toggle="collapse" role="button" aria-expanded="{{ $feesActive ? 'true' : 'false' }}" aria-controls="feesSubmenu">
+                <!-- Fees Management -->
+                <li class="nav-item {{ request()->routeIs('student.fees.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('student.fees.pending') }}">
                         <i class="fas fa-fw fa-rupee-sign"></i>
-                        <span>Fees</span>
+                        <span>Fees Management</span>
                     </a>
-                    <ul class="submenu collapse{{ $feesActive ? ' show' : '' }}" id="feesSubmenu">
-                        <li class="nav-item {{ request()->routeIs('student.fees.paid') ? 'active' : '' }}">
-                            <a href="{{ route('student.fees.paid') }}" class="nav-link">Paid</a>
-                        </li>
-                        <li class="nav-item {{ request()->routeIs('student.fees.pending') ? 'active' : '' }}">
-                            <a href="{{ route('student.fees.pending') }}" class="nav-link">Pending</a>
-                        </li>
-                    </ul>
                 </li>
             @else
                 <!-- Warden/Admin Sidebar -->

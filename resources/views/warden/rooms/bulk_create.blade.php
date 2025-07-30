@@ -7,7 +7,7 @@
     <h1 class="h3 mb-4 text-gray-800">Bulk Add Rooms – {{ $hostel->name }}</h1>
     @if($roomTypes->isEmpty())
         <div class="alert alert-warning">
-            No room types found for this hostel. Please <a href="{{ route('warden.room-types.index', $hostel) }}">add room types</a> first.
+            No room types found for this hostel. Please <a href="{{ route('warden.hostels.room-types.index', $hostel) }}">add room types</a> first.
         </div>
     @else
     <form method="POST" action="{{ route('warden.rooms.bulkStore') }}">

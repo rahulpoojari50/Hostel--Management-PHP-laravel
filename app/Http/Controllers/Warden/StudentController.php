@@ -122,7 +122,7 @@ class StudentController extends Controller
                 'email' => $student->email,
                 'usn' => $student->usn ?? 'Not Available',
                 'phone' => $student->phone ?? 'Not Available',
-                'address' => $student->address ?? 'Not Available',
+                'address' => $profile && $profile->permanent_address ? $profile->permanent_address : ($profile && $profile->present_address ? $profile->present_address : ($student->address ?? 'Not Available')),
                 'photo' => $this->getStudentPhoto($student),
                 'hostel_name' => $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : 'Not Assigned',
                 'room_number' => $assignment && $assignment->room ? $assignment->room->room_number : 'Not Assigned',

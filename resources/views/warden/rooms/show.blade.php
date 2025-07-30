@@ -99,13 +99,13 @@
                 <div class="card shadow">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            {{ $roomTypeData['type']->type }} Rooms 
+                            {{ $roomTypeData['type']->type ?? 'Unknown Type' }} Rooms 
                             <span class="badge badge-info">{{ $roomTypeData['rooms']->count() }} rooms</span>
                         </h6>
                         <div>
                             <span class="text-muted">
-                                Capacity: {{ $roomTypeData['type']->capacity }} beds | 
-                                Rent: ${{ $roomTypeData['type']->price_per_month }}/month
+                                Capacity: {{ $roomTypeData['type']->capacity ?? 'N/A' }} beds | 
+                                Rent: ${{ $roomTypeData['type']->price_per_month ?? 'N/A' }}/month
                             </span>
                         </div>
                     </div>
@@ -184,11 +184,11 @@
                             })->count();
                             $partialRooms = $hostel->rooms->filter(function($room) {
                                 $occupants = $room->roomAssignments->where('status', 'active')->count();
-                                return $occupants > 0 && $occupants < $room->roomType->capacity;
+                                return $occupants > 0 && $room->roomType && $occupants < $room->roomType->capacity;
                             })->count();
                             $fullRooms = $hostel->rooms->filter(function($room) {
                                 $occupants = $room->roomAssignments->where('status', 'active')->count();
-                                return $occupants >= $room->roomType->capacity;
+                                return $room->roomType && $occupants >= $room->roomType->capacity;
                             })->count();
                         @endphp
                         <div class="col-md-3">

@@ -79,6 +79,21 @@ class ApplicationController extends Controller
                 $room->save();
             }
             $application->approve($warden, $remarks);
+            
+            // Create pending fees for the new student based on hostel's fee structure
+            $hostel = $application->hostel;
+            if ($hostel->fees && is_array($hostel->fees)) {
+                foreach ($hostel->fees as $fee) {
+                    \App\Models\StudentFee::create([
+                        'student_id' => $application->student_id,
+                        'hostel_id' => $hostel->id,
+                        'fee_type' => $fee['type'],
+                        'amount' => $fee['amount'],
+                        'status' => 'pending',
+                    ]);
+                }
+            }
+            
             return redirect()->route('warden.applications.index')->with('success', 'Application approved and room assigned.');
         } elseif ($action === 'reject') {
             $application->reject($warden, $remarks);
@@ -196,6 +211,20 @@ class ApplicationController extends Controller
         
         // Approve application
         $application->approve($warden, $validated['warden_remarks'] ?? 'Room allotted successfully.');
+        
+        // Create pending fees for the new student based on hostel's fee structure
+        $hostel = $application->hostel;
+        if ($hostel->fees && is_array($hostel->fees)) {
+            foreach ($hostel->fees as $fee) {
+                \App\Models\StudentFee::create([
+                    'student_id' => $application->student_id,
+                    'hostel_id' => $hostel->id,
+                    'fee_type' => $fee['type'],
+                    'amount' => $fee['amount'],
+                    'status' => 'pending',
+                ]);
+            }
+        }
         
         return redirect()->route('warden.room-allotment.index')
             ->with('success', 'Room allotted successfully to ' . $application->student->name);

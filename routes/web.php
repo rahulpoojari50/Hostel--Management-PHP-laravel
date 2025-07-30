@@ -33,11 +33,17 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('hostels', HostelController::class);
     
+    // Deleted hostels routes
+    Route::get('/hostels/deleted', [HostelController::class, 'deleted'])->name('hostels.deleted');
+    Route::post('/hostels/{hostel}/restore', [HostelController::class, 'restore'])->name('hostels.restore');
+    
     // Enhanced Hostel Management Routes
     Route::get('/manage-hostel', [HostelController::class, 'manageIndex'])->name('manage-hostel.index');
     Route::get('/manage-hostel/{hostel}', [HostelController::class, 'manage'])->name('manage-hostel.show');
     Route::post('/manage-hostel/{hostel}/room-types', [HostelController::class, 'storeRoomType'])->name('manage-hostel.room-types.store');
     Route::post('/manage-hostel/{hostel}/rooms', [HostelController::class, 'storeRooms'])->name('manage-hostel.rooms.store');
+    Route::post('/manage-hostel/{hostel}/add-rooms', [HostelController::class, 'addRooms'])->name('manage-hostel.add-rooms');
+    Route::post('/manage-hostel/{hostel}/store-rooms-details', [HostelController::class, 'storeRoomsWithDetails'])->name('manage-hostel.store-rooms-details');
     Route::post('/manage-hostel/{hostel}/rent', [HostelController::class, 'updateRent'])->name('manage-hostel.rent.update');
     Route::post('/manage-hostel/{hostel}/fees', [HostelController::class, 'updateFees'])->name('manage-hostel.fees.update');
     Route::post('/manage-hostel/{hostel}/menu', [HostelController::class, 'updateMenu'])->name('manage-hostel.menu.update');
@@ -47,8 +53,8 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     // Enhanced Rooms Management
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
     Route::get('/rooms/{hostel}', [RoomController::class, 'show'])->name('rooms.show');
-    Route::delete('/rooms/{hostel}/{room}', [RoomController::class, 'destroy'])->name('warden.rooms.destroy');
-    Route::put('/rooms/{hostel}/{room}', [RoomController::class, 'update'])->name('warden.rooms.update');
+    Route::delete('/rooms/{hostel}/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+    Route::put('/rooms/{hostel}/{room}', [RoomController::class, 'update'])->name('rooms.update');
     
     // Room Allotment System
     Route::get('/room-allotment', [ApplicationController::class, 'allotmentIndex'])->name('room-allotment.index');
@@ -61,7 +67,8 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::post('hostels/{hostel}/update-menu', [HostelController::class, 'updateMenu'])->name('hostels.updateMenu');
     Route::post('hostels/{hostel}/update-facilities', [HostelController::class, 'updateFacilities'])->name('hostels.updateFacilities');
     Route::resource('hostels.room-types', RoomTypeController::class);
-    Route::resource('room-types', RoomTypeController::class);
+    Route::post('hostels/{hostel}/room-types/{roomType}/restore', [RoomTypeController::class, 'restore'])->name('hostels.room-types.restore');
+    Route::delete('hostels/{hostel}/room-types/{roomType}/force-delete', [RoomTypeController::class, 'forceDelete'])->name('hostels.room-types.force-delete');
     Route::resource('applications', ApplicationController::class);
     Route::resource('meals', MealController::class);
     Route::get('hostels/{hostel}/students', [HostelController::class, 'students'])->name('hostels.students');
@@ -89,6 +96,13 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
             'action' => 'rooms',
         ]);
     })->name('selectHostel.rooms');
+    Route::get('select-hostel/room-types', function() {
+        $hostels = Auth::user()->managedHostels;
+        return view('warden.select_hostel', [
+            'hostels' => $hostels,
+            'action' => 'room-types',
+        ]);
+    })->name('selectHostel.room-types');
     // Meals Attendance
     Route::get('/meals-attendance', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'index'])->name('warden.meals-attendance.index');
     Route::post('/meals-attendance/fetch-students', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'fetchStudents'])->name('warden.meals-attendance.fetch-students');
@@ -113,6 +127,7 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'show'])->name('students.show');
     Route::put('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'update'])->name('students.update');
     Route::get('/fees', [App\Http\Controllers\Warden\FeesController::class, 'index'])->name('fees.index');
+    Route::get('/fees/create-missing/{hostel}', [App\Http\Controllers\Warden\FeesController::class, 'createMissingFees'])->name('fees.create-missing');
     Route::get('/fees/student-status', [App\Http\Controllers\Warden\FeesController::class, 'studentStatus'])->name('fees.student_status');
     Route::get('/fees/student-status/export/csv', [App\Http\Controllers\Warden\FeesController::class, 'exportCsv'])->name('fees.student_status.export.csv');
     Route::get('/fees/student-status/export/pdf', [App\Http\Controllers\Warden\FeesController::class, 'exportPdf'])->name('fees.student_status.export.pdf');

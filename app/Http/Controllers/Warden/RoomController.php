@@ -61,7 +61,7 @@ class RoomController extends Controller
             'max_occupants' => 'required|integer|min:1',
         ]);
         $room->update($validated);
-        return redirect()->route('warden.hostels.rooms.index', $hostel)->with('success', 'Room updated successfully.');
+        return redirect()->route('warden.manage-hostel.show', $hostelId)->with('success', 'Room updated successfully.');
     }
 
     public function destroy($hostelId, $id)
@@ -69,7 +69,7 @@ class RoomController extends Controller
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
         $room = $hostel->rooms()->findOrFail($id);
         $room->delete();
-        return redirect()->route('warden.hostels.rooms.index', $hostel)->with('success', 'Room deleted successfully.');
+        return redirect()->route('warden.manage-hostel.show', $hostelId)->with('success', 'Room deleted successfully.');
     }
 
     public function manage($hostelId)

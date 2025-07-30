@@ -178,17 +178,32 @@ class HostelController extends Controller
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
         $menu = $request->input('menu', []);
-        $hostel->menu = $menu;
-        $hostel->save();
-        // Sync menu to meals table for the next 7 days
-        $daysOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        
+        // Clean up empty values and ensure proper structure
+        $cleanedMenu = [];
+        $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         $mealTypes = ['breakfast','lunch','snacks','dinner'];
-        $today = \Carbon\Carbon::today();
-        for ($i = 0; $i < 7; $i++) {
-            $date = $today->copy()->addDays($i);
-            $dayName = $date->format('l');
+        
+        foreach ($days as $day) {
+            $cleanedMenu[$day] = [];
             foreach ($mealTypes as $mealType) {
-                $menuDesc = $menu[$dayName][$mealType] ?? null;
+                $value = trim($menu[$day][$mealType] ?? '');
+                $cleanedMenu[$day][$mealType] = $value;
+            }
+        }
+        
+        $hostel->menu = $cleanedMenu;
+        $hostel->save();
+        
+        // Sync menu to meals table for all future dates (next 60 days)
+        $today = \Carbon\Carbon::today();
+        
+        for ($i = 0; $i < 60; $i++) {
+            $date = $today->copy()->addDays($i);
+            $dayName = $days[$date->dayOfWeek]; // Use the same day names as in the form
+            
+            foreach ($mealTypes as $mealType) {
+                $menuDesc = $cleanedMenu[$dayName][$mealType] ?? null;
                 if ($menuDesc) {
                     \App\Models\Meal::updateOrCreate(
                         [
@@ -203,7 +218,8 @@ class HostelController extends Controller
                 }
             }
         }
-        return redirect()->back()->with('success', 'Menu updated. Meals for the week have been synced.');
+        
+        return redirect()->back()->with('success', 'Menu updated successfully. Meals for the next 60 days have been synced to student portal.');
     }
 
     /**
@@ -435,7 +451,8 @@ class HostelController extends Controller
         $pendingRoomType = session('pending_room_type');
         $pendingRoomCount = session('pending_room_count');
         $pendingRoomTypeId = session('pending_room_type_id');
-        return view('warden.manage_hostel.show', compact('hostel', 'pendingRoomType', 'pendingRoomCount', 'pendingRoomTypeId'));
+        $pendingAddRooms = session('pending_add_rooms');
+        return view('warden.manage_hostel.show', compact('hostel', 'pendingRoomType', 'pendingRoomCount', 'pendingRoomTypeId', 'pendingAddRooms'));
     }
 
     /**
@@ -465,6 +482,30 @@ class HostelController extends Controller
     }
 
     /**
+     * Store room type and number of rooms, then show room number/floor form
+     */
+    public function addRooms(Request $request, $id)
+    {
+        $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
+        $validated = $request->validate([
+            'room_type_id' => 'required|exists:room_types,id',
+            'number_of_rooms' => 'required|integer|min:1|max:10',
+        ]);
+        
+        $roomType = $hostel->roomTypes()->find($validated['room_type_id']);
+        
+        // Store info in session for next step
+        return redirect()->route('warden.manage-hostel.show', $hostel->id)
+            ->with('pending_add_rooms', [
+                'room_type_id' => $validated['room_type_id'],
+                'room_type_name' => $roomType->type,
+                'capacity' => $roomType->capacity,
+                'price_per_month' => $roomType->price_per_month,
+                'number_of_rooms' => $validated['number_of_rooms'],
+            ]);
+    }
+
+    /**
      * Store rooms for a room type (after assigning numbers/floors)
      */
     public function storeRooms(Request $request, $id)
@@ -483,9 +524,58 @@ class HostelController extends Controller
                 'room_number' => $roomData['room_number'],
                 'floor' => $roomData['floor_number'],
                 'status' => 'available',
+                'current_occupants' => 0,
                 'max_occupants' => $roomType->capacity,
             ]);
         }
+        return redirect()->back()->with('success', 'Rooms added successfully.');
+    }
+
+    /**
+     * Store rooms with details (for adding rooms to existing room types)
+     */
+    public function storeRoomsWithDetails(Request $request, $id)
+    {
+        $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
+        $validated = $request->validate([
+            'room_type_id' => 'required|exists:room_types,id',
+            'rooms' => 'required|array',
+            'rooms.*.room_number' => 'required|string|max:50',
+            'rooms.*.floor_number' => 'required|string|max:10',
+        ]);
+        
+        $roomType = $hostel->roomTypes()->find($validated['room_type_id']);
+        
+        // Check for duplicate room numbers within the same hostel and floor
+        $existingRooms = $hostel->rooms()->whereIn('floor', collect($validated['rooms'])->pluck('floor_number'))->get();
+        $duplicates = [];
+        
+        foreach ($validated['rooms'] as $roomData) {
+            $existingRoom = $existingRooms->where('room_number', $roomData['room_number'])
+                                         ->where('floor', $roomData['floor_number'])
+                                         ->first();
+            if ($existingRoom) {
+                $duplicates[] = "Room {$roomData['room_number']} on floor {$roomData['floor_number']}";
+            }
+        }
+        
+        if (!empty($duplicates)) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['rooms' => 'The following rooms already exist: ' . implode(', ', $duplicates)]);
+        }
+        
+        foreach ($validated['rooms'] as $roomData) {
+            $hostel->rooms()->create([
+                'room_type_id' => $validated['room_type_id'],
+                'room_number' => $roomData['room_number'],
+                'floor' => $roomData['floor_number'],
+                'status' => 'available',
+                'current_occupants' => 0,
+                'max_occupants' => $roomType->capacity,
+            ]);
+        }
+        
         return redirect()->route('warden.manage-hostel.show', $hostel->id)
             ->with('success', 'Rooms added successfully.');
     }
@@ -618,6 +708,7 @@ class HostelController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
+            'usn' => 'required|string|max:255|unique:users,usn',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'hostel_id' => 'required|exists:hostels,id',
@@ -626,6 +717,7 @@ class HostelController extends Controller
         $student = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'usn' => $validated['usn'],
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'role' => 'student',
@@ -657,8 +749,9 @@ class HostelController extends Controller
         while (($row = fgetcsv($handle)) !== false) {
             $attempted++;
             $data = array_combine($header, $row);
-            if (!isset($data['name'], $data['email'], $data['hostel'], $data['room_type'])) continue;
+            if (!isset($data['name'], $data['email'], $data['usn'], $data['hostel'], $data['room_type'])) continue;
             if (User::where('email', $data['email'])->exists()) continue;
+            if (User::where('usn', $data['usn'])->exists()) continue;
             $hostel = Hostel::where('warden_id', $wardenId)->where('name', $data['hostel'])->first();
             if (!$hostel) continue;
             $roomType = $hostel->roomTypes()->where('type', $data['room_type'])->first();
@@ -666,6 +759,7 @@ class HostelController extends Controller
             $student = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'usn' => $data['usn'],
                 'phone' => $data['phone'] ?? null,
                 'address' => $data['address'] ?? null,
                 'role' => 'student',
@@ -702,8 +796,12 @@ class HostelController extends Controller
     public function updateFees(Request $request, $id)
     {
         $hostel = \App\Models\Hostel::where('warden_id', \Auth::id())->findOrFail($id);
+        
         // Collect all fees from the form
         $fees = [];
+        $createdFees = 0;
+        $existingFees = 0;
+        
         // Default fees
         if ($request->has('fees')) {
             foreach ($request->input('fees') as $type => $amount) {
@@ -726,8 +824,101 @@ class HostelController extends Controller
                 }
             }
         }
+        
+        // Update hostel fees
         $hostel->fees = $fees;
         $hostel->save();
-        return redirect()->back()->with('success', 'Fees updated successfully.');
+        
+        // Get all students currently in this hostel (with active room assignments)
+        $students = \App\Models\User::whereHas('roomAssignments', function($q) use ($hostel) {
+            $q->where('status', 'active')
+              ->whereHas('room', function($qr) use ($hostel) {
+                  $qr->where('hostel_id', $hostel->id);
+              });
+        })->get();
+        
+        // Create pending fee records for all students
+        foreach ($students as $student) {
+            foreach ($fees as $fee) {
+                // Check if this fee type already exists for this student
+                $existingFee = \App\Models\StudentFee::where('student_id', $student->id)
+                    ->where('hostel_id', $hostel->id)
+                    ->where('fee_type', $fee['type'])
+                    ->first();
+                
+                // Only create if it doesn't exist
+                if (!$existingFee) {
+                    try {
+                        \App\Models\StudentFee::create([
+                            'student_id' => $student->id,
+                            'hostel_id' => $hostel->id,
+                            'fee_type' => $fee['type'],
+                            'amount' => $fee['amount'],
+                            'status' => 'pending',
+                        ]);
+                        $createdFees++;
+                    } catch (\Exception $e) {
+                        \Log::error("Failed to create fee for student {$student->id}: " . $e->getMessage());
+                    }
+                } else {
+                    $existingFees++;
+                }
+            }
+        }
+        
+        $studentCount = $students->count();
+        $feeCount = count($fees);
+        
+        $message = "Fees updated successfully. ";
+        if ($createdFees > 0) {
+            $message .= "Created {$createdFees} new pending fee(s) for {$studentCount} student(s). ";
+        }
+        if ($existingFees > 0) {
+            $message .= "{$existingFees} fee(s) already existed. ";
+        }
+        if ($createdFees === 0 && $existingFees === 0) {
+            $message .= "No new fees were created (all fees already exist).";
+        }
+        
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * Get all deleted hostels for the current warden
+     */
+    public function deleted()
+    {
+        $deletedHostels = Hostel::onlyTrashed()
+            ->where('warden_id', Auth::id())
+            ->get()
+            ->map(function ($hostel) {
+                return [
+                    'id' => $hostel->id,
+                    'name' => $hostel->name,
+                    'type' => ucfirst($hostel->type),
+                    'deleted_at' => $hostel->deleted_at->format('M d, Y H:i')
+                ];
+            });
+
+        return response()->json([
+            'hostels' => $deletedHostels
+        ]);
+    }
+
+    /**
+     * Restore a deleted hostel
+     */
+    public function restore($id)
+    {
+        $hostel = Hostel::onlyTrashed()
+            ->where('warden_id', Auth::id())
+            ->findOrFail($id);
+
+        $hostel->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Hostel restored successfully'
+        ]);
     }
 }

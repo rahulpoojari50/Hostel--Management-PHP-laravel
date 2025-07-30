@@ -26,6 +26,7 @@ class DashboardController extends Controller
         $meals = collect();
         $hostel = null;
         if ($assignment && $assignment->room && $assignment->room->hostel) {
+            // Student has an active room assignment
             $hostel = $assignment->room->hostel;
             $meals = Meal::where('hostel_id', $hostel->id)
                 ->where('meal_date', '>=', now()->toDateString())
@@ -33,6 +34,7 @@ class DashboardController extends Controller
                 ->orderBy('meal_type')
                 ->get();
         } elseif ($application && $application->isApproved() && $application->hostel) {
+            // Student has an approved application but no room assignment yet
             $hostel = $application->hostel;
             $meals = Meal::where('hostel_id', $hostel->id)
                 ->where('meal_date', '>=', now()->toDateString())
@@ -40,6 +42,7 @@ class DashboardController extends Controller
                 ->orderBy('meal_type')
                 ->get();
         }
+        // If no hostel is found, $hostel will remain null and no menu will be displayed
         // Group meals by date, then by meal_type
         $groupedMeals = $meals->groupBy('meal_date')->map(function($mealsForDate) {
             return $mealsForDate->keyBy('meal_type');
@@ -49,7 +52,7 @@ class DashboardController extends Controller
 
         // Prepare weekly menu from hostel->menu (if available)
         $weeklyMenu = [];
-        $daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+        $daysOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; // Match warden form order
         $menuMealTypes = ['breakfast','lunch','snacks','dinner'];
         if ($hostel && is_array($hostel->menu)) {
             foreach ($daysOfWeek as $day) {
@@ -58,6 +61,8 @@ class DashboardController extends Controller
                 }
             }
         }
+        
+
         return view('student.dashboard', compact('application', 'assignment', 'groupedMeals', 'mealTypes', 'weeklyMenu', 'daysOfWeek', 'menuMealTypes'));
     }
 }

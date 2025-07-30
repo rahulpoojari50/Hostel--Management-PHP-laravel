@@ -52,6 +52,12 @@ class ProfileController extends Controller
         $profile->user_id = $user->id;
         $profile->save();
 
+        // Sync phone to users table
+        if (isset($data['phone'])) {
+            $user->phone = $data['phone'];
+            $user->save();
+        }
+
         // Force reload of the relationship for the next request
         $user->unsetRelation('studentProfile');
 

@@ -94,7 +94,7 @@
               <div class="form-group">
                 <label for="csv_file">CSV File</label>
                 <input type="file" class="form-control-file" id="csv_file" name="csv_file" accept=".csv" required>
-                <small class="form-text text-muted">CSV columns: name, email, phone, address, hostel, room_type</small>
+                <small class="form-text text-muted">CSV columns: name, email, usn, phone, address, hostel, room_type</small>
               </div>
             </div>
             <div class="modal-footer">

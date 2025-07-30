@@ -94,8 +94,18 @@
                             </tbody>
                         </table>
                     </div>
+                @elseif($assignment && $assignment->room && $assignment->room->hostel)
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No weekly menu has been set by the warden for your hostel yet.
+                    </div>
+                @elseif($application && $application->isApproved() && $application->hostel)
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No weekly menu has been set by the warden for your approved hostel yet.
+                    </div>
                 @else
-                    <p class="mb-0 text-muted">No weekly menu set by warden.</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> You need to be assigned to a hostel to view the weekly meals menu.
+                    </div>
                 @endif
             </div>
         </div>

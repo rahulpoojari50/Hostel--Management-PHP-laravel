@@ -13,24 +13,37 @@
                 <div class="card-body">
                     <div class="mb-2"><strong>Location:</strong> {{ $hostel->location ?? $hostel->address }}</div>
                     <div class="mb-2"><strong>Description:</strong> {{ $hostel->description }}</div>
-                    <div class="mb-2"><strong>Menu / Food:</strong></div>
-                    <div class="table-responsive mb-3">
-                        <table class="table table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Snacks</th><th>Dinner</th></tr>
-                            </thead>
-                            <tbody>
-                                @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $day)
-                                    <tr>
-                                        <td class="font-weight-bold">{{ $day }}</td>
-                                        @foreach(['breakfast','lunch','snacks','dinner'] as $meal)
-                                            <td>{{ $hostel->menu[$day][$meal] ?? '-' }}</td>
-                                        @endforeach
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="mb-2"><strong>Weekly Meals Menu:</strong></div>
+                    @php
+                        $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                        $mealTypes = ['breakfast','lunch','snacks','dinner'];
+                        $menu = $hostel->menu ?? [];
+                        $hasMenuData = !empty(array_filter($menu, function($day) { return !empty(array_filter($day)); }));
+                    @endphp
+                    
+                    @if($hasMenuData)
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered mb-0">
+                                <thead class="thead-light">
+                                    <tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Snacks</th><th>Dinner</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($days as $day)
+                                        <tr>
+                                            <td class="font-weight-bold">{{ $day }}</td>
+                                            @foreach($mealTypes as $meal)
+                                                <td>{{ $menu[$day][$meal] ?? '-' }}</td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i> No weekly menu has been set by the warden yet.
+                        </div>
+                    @endif
                     <div class="mb-2"><strong>Room Types:</strong></div>
                     <div class="table-responsive mb-3">
                         <table class="table table-bordered mb-0">

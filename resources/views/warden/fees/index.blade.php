@@ -87,6 +87,11 @@
                         <i class="fas fa-plus"></i> Add Another Fee
                     </button>
                     <button type="submit" class="btn btn-success">Add/Update Fees</button>
+                    @if($selectedHostel)
+                    <a href="{{ route('warden.fees.create-missing', $selectedHostel->id) }}" class="btn btn-info ml-2">
+                        <i class="fas fa-sync"></i> Create Missing Fees for Students
+                    </a>
+                    @endif
                 </form>
                 @endif
             </div>
