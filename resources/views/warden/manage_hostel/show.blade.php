@@ -14,6 +14,9 @@
         <button type="button" class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#addRoomsModal">
             <i class="fas fa-bed"></i> Add Rooms
         </button>
+        <a href="{{ route('warden.hostels.rooms.bulkCreate', $hostel) }}" class="btn btn-success btn-sm ml-2">
+            <i class="fas fa-layer-group"></i> Bulk Add Rooms
+        </a>
     </div>
 </div>
 
@@ -138,12 +141,8 @@
 </div>
 
 @include('components.breadcrumb', [
-    'pageTitle' => 'Manage Hostel',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
-        ['name' => $hostel->name, 'url' => '']
-    ]
+    'pageTitle' => $pageTitle,
+    'breadcrumbs' => $breadcrumbs
 ])
 
 <!-- Hostel Info Card -->
@@ -386,108 +385,10 @@
     </div>
 </div>
 
-<!-- Update Rent -->
+
+
+<!-- Update Meals Menu -->
 <div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Update Rent</h6>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('warden.manage-hostel.rent.update', $hostel) }}" method="POST">
-                    @csrf
-                    <div class="form-group">
-                        <label for="rent_room_type_id">Room Type</label>
-                        <select class="form-control" id="rent_room_type_id" name="room_type_id" required>
-                            <option value="">Select Room Type</option>
-                            @foreach($hostel->roomTypes as $roomType)
-                                <option value="{{ $roomType->id }}">
-                                    {{ $roomType->type }} - Current: ${{ $roomType->price_per_month }}/month
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="new_price_per_month">New Rent</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">$</span>
-                            </div>
-                            <input type="number" class="form-control" id="new_price_per_month" name="price_per_month" 
-                                   min="0" step="0.01" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-dollar-sign fa-sm"></i> Update Rent
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Fees Section -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Add Fees</h6>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('warden.manage-hostel.fees.update', $hostel) }}" method="POST">
-                    @csrf
-                    <!-- Default Fees (now removable) -->
-                    <div id="default-fees-section">
-                        <div class="form-group form-row align-items-end mb-2" id="fee-row-admission_fee">
-                            <div class="col-md-6">
-                                <label for="admission_fee">Admission Fee</label>
-                                <input type="number" class="form-control" id="admission_fee" name="fees[admission_fee]" value="1" min="0" step="0.01" required>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-sm remove-default-fee-btn" data-fee="admission_fee"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="form-group form-row align-items-end mb-2" id="fee-row-seat_rent">
-                            <div class="col-md-6">
-                                <label for="seat_rent">Security Fees</label>
-                                <input type="number" class="form-control" id="seat_rent" name="fees[seat_rent]" value="1" min="0" step="0.01" required>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-sm remove-default-fee-btn" data-fee="seat_rent"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="form-group form-row align-items-end mb-2" id="fee-row-medical_aid_fee">
-                            <div class="col-md-6">
-                                <label for="medical_aid_fee">Medical Aid Fee</label>
-                                <input type="number" class="form-control" id="medical_aid_fee" name="fees[medical_aid_fee]" value="1" min="0" step="0.01" required>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-sm remove-default-fee-btn" data-fee="medical_aid_fee"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="form-group form-row align-items-end mb-2" id="fee-row-mess_fee">
-                            <div class="col-md-6">
-                                <label for="mess_fee">Mess Fee</label>
-                                <input type="number" class="form-control" id="mess_fee" name="fees[mess_fee]" value="1" min="0" step="0.01" required>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-sm remove-default-fee-btn" data-fee="mess_fee"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Dynamic Optional Fees -->
-                    <div id="optional-fees-section"></div>
-                    <button type="button" class="btn btn-link p-0 mb-3" id="add-fee-btn">
-                        <i class="fas fa-plus"></i> Add Another Fee
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-plus fa-sm"></i> Add/Update Fees
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <!-- End Add Fees Section -->
-
-    <!-- Update Meals Menu -->
     <div class="col-lg-12 mb-4">
         <div class="card shadow">
             <div class="card-header py-3">
@@ -626,10 +527,10 @@
                                                     <!-- Edit Room Modal Trigger -->
                                                     <a href="#" data-toggle="modal" data-target="#editRoomModal{{ $room->id }}" title="Edit"><i class="fas fa-edit text-primary ml-1"></i></a>
                                                     <!-- Delete Room Form -->
-                                                    <form action="{{ route('warden.rooms.destroy', [$hostel->id, $room->id]) }}" method="POST" style="display:inline;">
+                                                    <form action="{{ route('warden.hostels.rooms.destroy', [$hostel->id, $room->id]) }}" method="POST" style="display:inline;">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-link p-0 m-0 align-baseline" onclick="return confirm('Delete room {{ $room->room_number }}?')" title="Delete"><i class="fas fa-trash text-danger ml-1"></i></button>
+                                                        <button type="submit" class="btn btn-link p-0 m-0 align-baseline" title="Delete"><i class="fas fa-trash text-danger ml-1"></i></button>
                                                     </form>
                                                 </span>
                                                 <!-- Edit Room Modal -->

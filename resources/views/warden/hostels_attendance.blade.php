@@ -3,15 +3,23 @@
 @section('title', 'Hostel Attendance')
 
 @section('content')
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Hostel Attendance</h5>
+</div>
+
 <div class="container-fluid py-4">
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Hostel Attendance',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
-            ['name' => 'Hostel Attendance', 'url' => '']
-        ]
-    ])
     <div class="mb-2">
         <strong>Legend:</strong>
         <span class="badge badge-success">P</span> = Present,
@@ -23,7 +31,6 @@
         <button type="button" class="btn btn-info ml-2" id="viewAttendanceBtn">View Attendance</button>
         <button type="button" class="btn btn-primary ml-2" id="takeAttendanceBtn">Take Attendance</button>
         <button type="button" class="btn btn-warning ml-2" id="editAttendanceBtn">Edit Attendance</button>
-        <a href="{{ route('warden.hostels.attendance.download-csv', [$hostel->id, 'date' => $date]) }}" class="btn btn-success ml-2">Download CSV</a>
         <input type="hidden" name="date" id="hiddenAttendanceDate" value="{{ $date }}">
     </form>
 

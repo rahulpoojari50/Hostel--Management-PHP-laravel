@@ -24,7 +24,15 @@ class StudentController extends Controller
             // Get all available rooms in the same hostel (not full, not maintenance)
             $availableRooms = $hostel->rooms()->where('status', 'available')->whereColumn('current_occupants', '<', 'max_occupants')->get();
         }
-        return view('warden.students_edit', compact('student', 'assignment', 'availableRooms'));
+        
+        $pageTitle = 'Edit Student';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Students', 'url' => route('warden.hostels.students', $hostel->id ?? 1)],
+            ['name' => 'Edit Student', 'url' => '']
+        ];
+        
+        return view('warden.students_edit', compact('student', 'assignment', 'availableRooms', 'pageTitle', 'breadcrumbs'));
     }
 
     // View student profile and parent details
@@ -53,7 +61,14 @@ class StudentController extends Controller
             'alternate_mobile' => $student->alternate_mobile ?? '-',
         ];
         
-        return view('warden.students_show', compact('student', 'assignment', 'profile', 'parentDetails'));
+        $pageTitle = 'Student Profile & Parent Details';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Students', 'url' => route('warden.hostels.students', $assignment->room->hostel->id ?? 1)],
+            ['name' => $student->name, 'url' => '']
+        ];
+        
+        return view('warden.students_show', compact('student', 'assignment', 'profile', 'parentDetails', 'pageTitle', 'breadcrumbs'));
     }
 
     // Update the student info

@@ -5,16 +5,21 @@
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    {{-- <h1 class="h3 mb-0 text-gray-800">Manage Hostel</h1> --}}
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        <a href="{{ route('warden.hostels.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Add Hostel
+        </a>
+    </div>
 </div>
 
-@include('components.breadcrumb', [
-    'pageTitle' => 'Manage Hostel',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Manage Hostel', 'url' => '']
-    ]
-])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Manage Hostel</h5>
+</div>
 
 <!-- Content Row -->
 <div class="row">

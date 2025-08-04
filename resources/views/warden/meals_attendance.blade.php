@@ -1,14 +1,22 @@
 @extends('layouts.admin')
 
 @section('content')
-@include('components.breadcrumb', [
-    'pageTitle' => ($selectedHostel ? $selectedHostel->name . ' Meals Attendance' : 'Meals Attendance'),
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Meals Attendance', 'url' => route('warden.meals-attendance.index')],
-        $selectedHostel ? ['name' => $selectedHostel->name, 'url' => ''] : null
-    ]
-])
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">{{ $selectedHostel ? $selectedHostel->name . ' Meals Attendance' : 'Meals Attendance' }}</h5>
+</div>
+
 <div class="container-fluid">
     {{-- <h1 class="h3 mb-4 text-gray-800">Meals Attendance</h1> --}}
     @if($selectedHostel)
@@ -27,7 +35,6 @@
         <button type="button" class="btn btn-info ml-2" id="viewAttendanceBtn">View Attendance</button>
         <button type="button" class="btn btn-primary ml-2" id="takeAttendanceBtn">Take Attendance</button>
         <button type="button" class="btn btn-warning ml-2" id="editMealsAttendanceBtn">Edit Attendance</button>
-        <a href="{{ route('warden.meals-attendance.download-csv', [$selectedHostel->id, 'date' => $date]) }}" class="btn btn-success ml-2">Download CSV</a>
         <input type="hidden" name="date" id="hiddenAttendanceDate" value="{{ $date }}">
     </form>
 
@@ -194,23 +201,26 @@
                                                 <i class="fas fa-user mr-1"></i>{{ $student->name }}
                                             </a>
                                         </td>
+                                        <td>{{ $student->usn ?? '-' }}</td>
                                         @foreach(['Breakfast','Lunch','Snacks','Dinner'] as $meal)
                                         <td class="text-center">
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Taken" checked @if($attendanceExists) disabled @endif>
-                                                <label class="form-check-label">P</label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Skipped" @if($attendanceExists) disabled @endif>
-                                                <label class="form-check-label">A</label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="On Leave" @if($attendanceExists) disabled @endif>
-                                                <label class="form-check-label">L</label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Holiday" @if($attendanceExists) disabled @endif>
-                                                <label class="form-check-label">H</label>
+                                            <div class="attendance-controls">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Taken" checked @if($attendanceExists) disabled @endif>
+                                                    <label class="form-check-label">P</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Skipped" @if($attendanceExists) disabled @endif>
+                                                    <label class="form-check-label">A</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="On Leave" @if($attendanceExists) disabled @endif>
+                                                    <label class="form-check-label">L</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Holiday" @if($attendanceExists) disabled @endif>
+                                                    <label class="form-check-label">H</label>
+                                                </div>
                                             </div>
                                         </td>
                                         @endforeach
@@ -409,4 +419,40 @@ function formatDate(date) {
 @endif
 
 @include('components.student-profile-modal')
+
+@push('styles')
+<style>
+.attendance-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: nowrap;
+}
+
+.attendance-controls .form-check {
+    margin: 0;
+    padding: 0;
+    min-width: auto;
+}
+
+.attendance-controls .form-check-input {
+    width: 12px;
+    height: 12px;
+    margin: 0 2px 0 0;
+}
+
+.attendance-controls .form-check-label {
+    font-size: 10px;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.attendance-controls .form-check-inline {
+    margin-right: 4px;
+}
+</style>
+@endpush
 @endsection 

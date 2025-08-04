@@ -84,6 +84,27 @@ class RoomApplication extends Model
     }
 
     /**
+     * Check if application was reapproved (previously rejected then approved)
+     */
+    public function isReapproved(): bool
+    {
+        return $this->status === 'approved' && 
+               $this->warden_remarks && 
+               str_contains($this->warden_remarks, '[REAPPROVED');
+    }
+
+    /**
+     * Get display status for the application
+     */
+    public function getDisplayStatus(): string
+    {
+        if ($this->isReapproved()) {
+            return 'reapproved';
+        }
+        return $this->status;
+    }
+
+    /**
      * Approve the application
      */
     public function approve(User $warden, string $remarks = null): void

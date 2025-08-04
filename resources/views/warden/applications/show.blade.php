@@ -5,12 +5,8 @@
 @section('content')
 <div class="container-fluid py-4">
     @include('components.breadcrumb', [
-        'pageTitle' => 'Application Details',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Applications', 'url' => route('warden.applications.index')],
-            ['name' => 'Application Details', 'url' => '']
-        ]
+        'pageTitle' => $pageTitle,
+        'breadcrumbs' => $breadcrumbs
     ])
 
     <!-- Application Details Card -->
@@ -69,8 +65,18 @@
                                 <tr>
                                     <td><strong>Status:</strong></td>
                                     <td>
-                                        <span class="badge badge-{{ $application->status === 'pending' ? 'warning' : ($application->status === 'approved' ? 'success' : 'danger') }}">
-                                            {{ ucfirst($application->status) }}
+                                        @php
+                                            $displayStatus = $application->getDisplayStatus();
+                                            $badgeClass = $displayStatus === 'pending' ? 'warning' : 
+                                                         ($displayStatus === 'approved' ? 'success' : 
+                                                         ($displayStatus === 'reapproved' ? 'success' : 'danger'));
+                                        @endphp
+                                        <span class="badge badge-{{ $badgeClass }}">
+                                            @if($displayStatus === 'reapproved')
+                                                <i class="fas fa-check-double mr-1"></i>Reapproved
+                                            @else
+                                                {{ ucfirst($displayStatus) }}
+                                            @endif
                                         </span>
                                     </td>
                                 </tr>
@@ -136,7 +142,7 @@
                             </div>
                             <div class="col-md-6">
                                 <h6 class="font-weight-bold text-danger">Reject Application</h6>
-                                <form action="{{ route('warden.applications.update', $application) }}" method="POST">
+                                <form action="{{ route('warden.applications.update', $application) }}" method="POST" id="reject-form">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="action" value="reject">
@@ -144,12 +150,62 @@
                                         <label for="warden_remarks_reject">Warden Remarks (optional)</label>
                                         <textarea name="warden_remarks" class="form-control" rows="3" placeholder="Reason for rejection..."></textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-danger">
+                                    <button type="submit" class="btn btn-danger" id="reject-btn">
                                         <i class="fas fa-times"></i> Reject Application
                                     </button>
                                 </form>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @elseif($application->status == 'rejected')
+        <!-- Reapprove Card -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4 border-warning reapprove-section">
+                    <div class="card-header py-3 bg-warning text-dark">
+                        <h6 class="m-0 font-weight-bold">Reapprove Application</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle"></i> Application Status
+                            </h6>
+                            <p class="mb-0">This application was previously rejected. You can reapprove it and assign a room to the student.</p>
+                        </div>
+                        
+                        <form action="{{ route('warden.applications.update', $application) }}" method="POST" id="reapprove-form">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="action" value="approve">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="room_id">Select Room Number <span class="text-danger">*</span></label>
+                                        <select name="room_id" class="form-control" required id="room_id_select">
+                                            <option value="">-- Select Room --</option>
+                                            @foreach($availableRooms as $room)
+                                                <option value="{{ $room->id }}">Room {{ $room->room_number }} (Floor {{ $room->floor }}, {{ $room->current_occupants }}/{{ $room->max_occupants }})</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted">Please select an available room for the student.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="warden_remarks_reapprove">Warden Remarks (optional)</label>
+                                        <textarea name="warden_remarks" class="form-control" rows="3" placeholder="Reason for reapproval..." id="warden_remarks_reapprove"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-warning btn-lg" id="reapprove-btn">
+                                    <i class="fas fa-check-double"></i> Reapprove & Allot Room
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -164,7 +220,7 @@
                     <a href="{{ route('warden.applications.index') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Applications
                     </a>
-                    @if($application->status == 'pending')
+                    @if($application->status == 'pending' || $application->status == 'rejected')
                         <a href="{{ route('warden.room-allotment.show', $application) }}" class="btn btn-primary">
                             <i class="fas fa-bed"></i> Go to Room Allotment
                         </a>
@@ -176,4 +232,97 @@
 </div>
 
 @include('components.student-profile-modal')
+
+<style>
+.reapprove-section {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+}
+
+.reapprove-section .card-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: #000;
+    font-weight: bold;
+}
+
+.btn-warning:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid #bee5eb;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rejectForm = document.getElementById('reject-form');
+    const rejectBtn = document.getElementById('reject-btn');
+    const reapproveForm = document.getElementById('reapprove-form');
+    const reapproveBtn = document.getElementById('reapprove-btn');
+    const roomSelect = document.getElementById('room_id_select');
+    
+    // Handle reject form
+    if (rejectForm && rejectBtn) {
+        rejectForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show confirmation dialog
+            if (confirm('Are you sure you want to reject this application? This action will require additional confirmation.')) {
+                // Submit the form
+                rejectForm.submit();
+            }
+        });
+    }
+    
+    // Handle reapprove form
+    if (reapproveForm && reapproveBtn) {
+        reapproveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate room selection
+            if (!roomSelect.value) {
+                alert('Please select a room before reapproving the application.');
+                roomSelect.focus();
+                return;
+            }
+            
+            // Show confirmation dialog
+            if (confirm('Are you sure you want to reapprove this application and allot a room? This action cannot be undone.')) {
+                // Show loading state
+                reapproveBtn.disabled = true;
+                reapproveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                
+                // Submit the form
+                reapproveForm.submit();
+            }
+        });
+    }
+    
+    // Add visual feedback for room selection
+    if (roomSelect) {
+        roomSelect.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    }
+});
+</script>
 @endsection 

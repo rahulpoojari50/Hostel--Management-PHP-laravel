@@ -3,18 +3,22 @@
 @section('title', 'Add Fees')
 
 @section('content')
-@include('components.breadcrumb', [
-    'pageTitle' => 'Add Fees',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Fees', 'url' => route('warden.fees.index')],
-        ['name' => 'Add Fees', 'url' => '']
-    ]
-])
 <!-- Page Heading -->
-{{-- <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Add Fees</h1>
-</div> --}}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- <h1 class="h3 mb-0 text-gray-800">Add Fees</h1> --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Add Fees</h5>
+</div>
+
 @php
     $hostels = Auth::user()->managedHostels;
     $selectedHostelId = request('hostel_id') ?? ($hostels->count() === 1 ? $hostels->first()->id : null);
@@ -121,6 +125,73 @@
                         @endif
                     </div>
                 @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Rent Section -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Update Rent</h6>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="" class="mb-3">
+                    <div class="form-group">
+                        <label for="rent_hostel_id">Select Hostel for Rent Update</label>
+                        <select class="form-control" id="rent_hostel_id" name="rent_hostel_id" onchange="this.form.submit()" required>
+                            <option value="">-- Select Hostel --</option>
+                            @foreach($hostels as $hostel)
+                                <option value="{{ $hostel->id }}" {{ request('rent_hostel_id') == $hostel->id ? 'selected' : '' }}>{{ $hostel->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </form>
+                
+                @php
+                    $rentHostelId = request('rent_hostel_id');
+                    $rentHostel = $hostels->where('id', $rentHostelId)->first();
+                @endphp
+                
+                @if($rentHostel)
+                <form action="{{ route('warden.manage-hostel.rent.update', $rentHostel) }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <label for="rent_room_type_id">Room Type</label>
+                        <select class="form-control" id="rent_room_type_id" name="room_type_id" required>
+                            <option value="">Select Room Type</option>
+                            @foreach($rentHostel->roomTypes as $roomType)
+                                <option value="{{ $roomType->id }}">
+                                    {{ $roomType->type }} - Current: ₹{{ $roomType->price_per_month }}/month
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_price_per_month">New Rent</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">₹</span>
+                            </div>
+                            <input type="number" class="form-control" id="new_price_per_month" name="price_per_month" 
+                                   min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-dollar-sign fa-sm"></i> Update Rent
+                    </button>
+                </form>
+                @elseif($rentHostelId)
+                <div class="text-center text-muted">
+                    <p>Selected hostel has no room types. Please add room types first.</p>
+                </div>
+                @else
+                <div class="text-center text-muted">
+                    <p>Please select a hostel above to update rent.</p>
+                </div>
+                @endif
             </div>
         </div>
     </div>

@@ -37,7 +37,7 @@ class DashboardController extends Controller
 
         $pageTitle = 'Hostel Dashboard';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/')],
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
             ['name' => 'Hostel Dashboard', 'url' => '']
         ];
         return view('warden.dashboard', compact(

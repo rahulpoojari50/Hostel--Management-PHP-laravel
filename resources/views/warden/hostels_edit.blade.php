@@ -3,17 +3,23 @@
 @section('title', 'Edit Hostel')
 
 @section('content')
-<div class="container-fluid py-4">
-    <h1 class="h3 mb-4 text-gray-800">Edit Hostel</h1>
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
 
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Edit Hostel',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
-            ['name' => 'Edit Hostel', 'url' => '']
-        ]
-    ])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Edit Hostel</h5>
+</div>
+
+<div class="container-fluid py-4">
     <div class="card shadow mb-4">
         <div class="card-body">
             <form action="{{ route('warden.hostels.update', $hostel) }}" method="POST">
@@ -47,7 +53,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Update Hostel</button>
-                <a href="{{ route('warden.hostels.index') }}" class="btn btn-secondary ml-2">Cancel</a>
+                <a href="{{ route('warden.dashboard') }}" class="btn btn-secondary ml-2">Cancel</a>
             </form>
         </div>
     </div>

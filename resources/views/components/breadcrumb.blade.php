@@ -3,9 +3,6 @@
         <h5 class="m-b-10">{{ $pageTitle ?? 'Dashboard' }}</h5>
     </div>
     <ul class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a href="{{ url('/') }}">Home</a>
-        </li>
         @foreach($breadcrumbs ?? [] as $breadcrumb)
             <li class="breadcrumb-item {{ $loop->last ? 'active' : '' }}">
                 @if (!$loop->last && !empty($breadcrumb['url']))

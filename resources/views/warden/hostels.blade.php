@@ -11,11 +11,8 @@
 </div>
 
 @include('components.breadcrumb', [
-    'pageTitle' => 'Hostels Management',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Hostels Management', 'url' => '']
-    ]
+    'pageTitle' => $pageTitle,
+    'breadcrumbs' => $breadcrumbs
 ])
 
 <!-- Content Row -->
@@ -61,7 +58,7 @@
                                                class="btn btn-warning btn-sm" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{{ route('warden.hostels.rooms.manage', $hostel) }}" class="btn btn-warning btn-sm">
+                                            <a href="{{ route('warden.rooms.show', $hostel) }}" class="btn btn-warning btn-sm">
                                                 <i class="fas fa-bed"></i> Manage Rooms
                                             </a>
                                             <button type="button" class="btn btn-danger btn-sm delete-hostel-btn" 

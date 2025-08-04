@@ -3,17 +3,29 @@
 @section('title', 'Add Hostel')
 
 @section('content')
-<div class="container-fluid py-4">
-    <h1 class="h3 mb-4 text-gray-800">Add Hostel</h1>
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', [
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
+                ['name' => 'Home', 'url' => route('warden.dashboard')],
+                ['name' => 'Add Hostel', 'url' => '']
+            ]
+        ])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
 
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Add Hostel',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
-            ['name' => 'Add Hostel', 'url' => '']
-        ]
-    ])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Add Hostel</h5>
+</div>
+
+<div class="container-fluid py-4">
     <div class="card shadow mb-4">
         <div class="card-body">
             <form action="{{ route('warden.hostels.store') }}" method="POST">

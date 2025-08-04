@@ -22,7 +22,14 @@ class MealsAttendanceController extends Controller
             })->count();
         }
         // Show list of hostels with Take Attendance button
-        return view('warden.meals_attendance_hostels', compact('hostels'));
+        
+        $pageTitle = 'Meals Attendance';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Meals Attendance', 'url' => '']
+        ];
+        
+        return view('warden.meals_attendance_hostels', compact('hostels', 'pageTitle', 'breadcrumbs'));
     }
 
     public function hostel($hostelId, Request $request)
@@ -44,7 +51,15 @@ class MealsAttendanceController extends Controller
         $attendanceExists = MealAttendance::whereIn('student_id', $students->pluck('id'))
             ->where('date', $date)
             ->exists();
-        return view('warden.meals_attendance', compact('selectedHostel', 'students', 'date', 'attendance', 'attendanceExists'));
+            
+        $pageTitle = 'Meals Attendance';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Meals Attendance', 'url' => route('warden.meals-attendance.index')],
+            $selectedHostel ? ['name' => $selectedHostel->name, 'url' => ''] : null
+        ];
+        
+        return view('warden.meals_attendance', compact('selectedHostel', 'students', 'date', 'attendance', 'attendanceExists', 'pageTitle', 'breadcrumbs'));
     }
 
     public function fetchStudents(Request $request)

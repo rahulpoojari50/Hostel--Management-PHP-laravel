@@ -1,8 +1,23 @@
 @extends('layouts.admin')
 
 @section('content')
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Meals Attendance</h5>
+</div>
+
 <div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Meals Attendance</h1>
     <div class="row">
         @forelse($hostels as $hostel)
         <div class="col-md-4 mb-4">

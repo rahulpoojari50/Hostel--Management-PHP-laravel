@@ -1,17 +1,29 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="row mb-3">
-    <x-breadcrumb :pageTitle="'Attendance Report'" :breadcrumbs="[
-        ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
-        ['name' => 'Attendance Report']
-    ]" />
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', [
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
+                ['name' => 'Attendance Report', 'url' => '']
+            ]
+        ])
+    </div>
+    <div>
+        <a href="{{ route('warden.hostels_attendance_hostels') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back
+        </a>
+    </div>
 </div>
-<div class="mb-3">
-    <a href="{{ route('warden.hostels_attendance_hostels') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Attendance Report</h5>
 </div>
+
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">Attendance Report Filters</div>

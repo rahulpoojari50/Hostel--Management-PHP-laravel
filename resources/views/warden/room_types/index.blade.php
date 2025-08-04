@@ -5,26 +5,21 @@
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Room Types for {{ $hostel->name }}</h1>
     <div>
-        <a href="{{ route('warden.manage-hostel.show', $hostel) }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
-            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostel
-        </a>
-        <a href="{{ route('warden.hostels.room-types.create', $hostel) }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm ml-2">
-            <i class="fas fa-plus fa-sm text-white-50"></i> Add Room Type
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        <a href="{{ route('warden.dashboard') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Dashboard
         </a>
     </div>
 </div>
 
-@include('components.breadcrumb', [
-    'pageTitle' => 'Room Types',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
-        ['name' => $hostel->name, 'url' => route('warden.manage-hostel.show', $hostel)],
-        ['name' => 'Room Types', 'url' => '']
-    ]
-])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Room Types for {{ $hostel->name }}</h5>
+</div>
 
 <!-- Content Row -->
 <div class="row">
@@ -45,7 +40,6 @@
                                     <th>Total Rooms</th>
                                     <th>Available Rooms</th>
                                     <th>Facilities</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -78,23 +72,6 @@
                                             @else
                                                 <span class="text-muted">No facilities listed</span>
                                             @endif
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ route('warden.hostels.room-types.show', [$hostel, $type]) }}" 
-                                                   class="btn btn-info btn-sm" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('warden.hostels.room-types.edit', [$hostel, $type]) }}" 
-                                                   class="btn btn-warning btn-sm" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{{ route('warden.hostels.room-types.destroy', [$hostel, $type]) }}" 
-                                                   class="btn btn-danger btn-sm" 
-                                                   title="Delete Room Type">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -189,9 +166,7 @@
                         <i class="fas fa-bed fa-3x text-gray-300 mb-3"></i>
                         <h5 class="text-gray-600">No Room Types Found</h5>
                         <p class="text-gray-500 mb-4">This hostel doesn't have any room types configured yet.</p>
-                        <a href="{{ route('warden.hostels.room-types.create', $hostel) }}" class="btn btn-primary">
-                            <i class="fas fa-plus fa-sm"></i> Add First Room Type
-                        </a>
+                        <p class="text-gray-400">Room types can be added from the hostel management page.</p>
                     </div>
                 @endif
             </div>
@@ -219,7 +194,6 @@
                                 <th>Price/Month</th>
                                 <th>Total Rooms</th>
                                 <th>Deleted Date</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -239,29 +213,6 @@
                                     </td>
                                     <td>
                                         <span class="text-muted">{{ $type->deleted_at->format('M d, Y H:i') }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <form action="{{ route('warden.hostels.room-types.restore', [$hostel, $type]) }}" 
-                                                  method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-success btn-sm" 
-                                                        onclick="return confirm('Are you sure you want to restore this room type?')"
-                                                        title="Restore">
-                                                    <i class="fas fa-undo"></i>
-                                                </button>
-                                            </form>
-                                            <form action="{{ route('warden.hostels.room-types.force-delete', [$hostel, $type]) }}" 
-                                                  method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm" 
-                                                        onclick="return confirm('Are you sure you want to permanently delete this room type? This action cannot be undone.')"
-                                                        title="Permanently Delete">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </form>
-                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

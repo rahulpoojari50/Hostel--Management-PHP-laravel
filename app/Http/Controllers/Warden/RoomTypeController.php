@@ -15,13 +15,32 @@ class RoomTypeController extends Controller
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
         $roomTypes = $hostel->roomTypes;
         $deletedRoomTypes = $hostel->roomTypes()->withTrashed()->whereNotNull('deleted_at')->get();
-        return view('warden.room_types.index', compact('hostel', 'roomTypes', 'deletedRoomTypes'));
+        
+        $pageTitle = 'Room Types - ' . $hostel->name;
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
+            ['name' => $hostel->name, 'url' => route('warden.manage-hostel.show', $hostel)],
+            ['name' => 'Room Types', 'url' => '']
+        ];
+        
+        return view('warden.room_types.index', compact('hostel', 'roomTypes', 'deletedRoomTypes', 'pageTitle', 'breadcrumbs'));
     }
 
     public function create($hostelId)
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
-        return view('warden.room_types.create', compact('hostel'));
+        
+        $pageTitle = 'Add Room Type';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
+            ['name' => $hostel->name, 'url' => route('warden.manage-hostel.show', $hostel)],
+            ['name' => 'Room Types', 'url' => route('warden.hostels.room-types.index', $hostel)],
+            ['name' => 'Add Room Type', 'url' => '']
+        ];
+        
+        return view('warden.room_types.create', compact('hostel', 'pageTitle', 'breadcrumbs'));
     }
 
     public function store(Request $request, $hostelId)
@@ -65,7 +84,17 @@ class RoomTypeController extends Controller
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
         $roomType = $hostel->roomTypes()->findOrFail($id);
-        return view('warden.room_types.edit', compact('hostel', 'roomType'));
+        
+        $pageTitle = 'Edit Room Type';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
+            ['name' => $hostel->name, 'url' => route('warden.manage-hostel.show', $hostel)],
+            ['name' => 'Room Types', 'url' => route('warden.hostels.room-types.index', $hostel)],
+            ['name' => 'Edit Room Type', 'url' => '']
+        ];
+        
+        return view('warden.room_types.edit', compact('hostel', 'roomType', 'pageTitle', 'breadcrumbs'));
     }
 
     public function update(Request $request, $hostelId, $id)

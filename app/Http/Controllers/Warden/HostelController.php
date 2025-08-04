@@ -34,7 +34,7 @@ class HostelController extends Controller
         $hostels = Hostel::where('warden_id', Auth::id())->get();
         $pageTitle = 'Hostels Management';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/')],
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
             ['name' => 'Hostels Management', 'url' => '']
         ];
         return view('warden.hostels', compact('hostels', 'pageTitle', 'breadcrumbs'));
@@ -83,7 +83,15 @@ class HostelController extends Controller
         $students = \App\Models\User::whereHas('roomAssignments.room', function($q) use ($hostel) {
             $q->where('hostel_id', $hostel->id);
         })->paginate(10);
-        return view('warden.hostels_show', compact('hostel', 'students'));
+        
+        $pageTitle = 'Hostel Details';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Hostel Details', 'url' => '']
+        ];
+        
+        return view('warden.hostels_show', compact('hostel', 'students', 'pageTitle', 'breadcrumbs'));
     }
 
     /**
@@ -92,7 +100,15 @@ class HostelController extends Controller
     public function edit($id)
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
-        return view('warden.hostels_edit', compact('hostel'));
+        
+        $pageTitle = 'Edit Hostel';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Edit Hostel', 'url' => '']
+        ];
+        
+        return view('warden.hostels_edit', compact('hostel', 'pageTitle', 'breadcrumbs'));
     }
 
     /**
@@ -235,7 +251,9 @@ class HostelController extends Controller
 
     public function students($id)
     {
-        $hostel = Hostel::where('warden_id', Auth::id())->with(['roomApplications.student', 'roomApplications.roomType'])->findOrFail($id);
+        // Use the selected hostel ID from request if available, otherwise use the original ID
+        $selectedHostelId = request('hostel_id', $id);
+        $hostel = Hostel::where('warden_id', Auth::id())->with(['roomApplications.student', 'roomApplications.roomType', 'roomTypes', 'rooms'])->findOrFail($selectedHostelId);
         $perPage = request('per_page', 10);
         $applicationsQuery = $hostel->roomApplications()
             ->whereIn('status', ['pending', 'approved'])
@@ -286,7 +304,15 @@ class HostelController extends Controller
 
         $applications = $applicationsQuery->paginate($perPage)->appends(request()->except('page'));
         $allHostels = Hostel::where('warden_id', Auth::id())->with('roomTypes')->get();
-        return view('warden.hostels_students', compact('hostel', 'applications', 'allHostels'));
+        
+        $pageTitle = 'Registered Students';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Registered Students', 'url' => '']
+        ];
+        
+        return view('warden.hostels_students', compact('hostel', 'applications', 'allHostels', 'pageTitle', 'breadcrumbs'));
     }
 
     public function attendance($id, Request $request)
@@ -351,7 +377,15 @@ class HostelController extends Controller
             ->groupBy(['student_id', 'date']);
 
         $attendanceExists = $records->count() > 0;
-        return view('warden.hostels_attendance', compact('hostel', 'students', 'records', 'date', 'attendanceExists', 'dates', 'startDate', 'endDate'));
+        
+        $pageTitle = 'Hostel Attendance';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Hostel Attendance', 'url' => '']
+        ];
+        
+        return view('warden.hostels_attendance', compact('hostel', 'students', 'records', 'date', 'attendanceExists', 'dates', 'startDate', 'endDate', 'pageTitle', 'breadcrumbs'));
     }
 
     public function markAttendance(Request $request, $id)
@@ -438,7 +472,14 @@ class HostelController extends Controller
     public function manageIndex()
     {
         $hostels = Hostel::where('warden_id', Auth::id())->get();
-        return view('warden.manage_hostel.index', compact('hostels'));
+        
+        $pageTitle = 'Manage Hostel';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Manage Hostel', 'url' => '']
+        ];
+        
+        return view('warden.manage_hostel.index', compact('hostels', 'pageTitle', 'breadcrumbs'));
     }
 
     /**
@@ -452,7 +493,15 @@ class HostelController extends Controller
         $pendingRoomCount = session('pending_room_count');
         $pendingRoomTypeId = session('pending_room_type_id');
         $pendingAddRooms = session('pending_add_rooms');
-        return view('warden.manage_hostel.show', compact('hostel', 'pendingRoomType', 'pendingRoomCount', 'pendingRoomTypeId', 'pendingAddRooms'));
+        
+        $pageTitle = 'Manage Hostel';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
+            ['name' => $hostel->name, 'url' => '']
+        ];
+        
+        return view('warden.manage_hostel.show', compact('hostel', 'pendingRoomType', 'pendingRoomCount', 'pendingRoomTypeId', 'pendingAddRooms', 'pageTitle', 'breadcrumbs'));
     }
 
     /**
@@ -529,6 +578,141 @@ class HostelController extends Controller
             ]);
         }
         return redirect()->back()->with('success', 'Rooms added successfully.');
+    }
+
+    /**
+     * Store a single room
+     */
+    public function storeSingleRoom(Request $request, $id)
+    {
+        $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
+        $validated = $request->validate([
+            'room_type_id' => 'required|exists:room_types,id',
+            'room_number' => 'required|string|max:50',
+            'floor' => 'required|string|max:10',
+        ]);
+        
+        $roomType = $hostel->roomTypes()->find($validated['room_type_id']);
+        
+        // Check for duplicate room number within the same hostel and floor
+        $existingRoom = $hostel->rooms()
+            ->where('room_number', $validated['room_number'])
+            ->where('floor', $validated['floor'])
+            ->first();
+            
+        if ($existingRoom) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['room_number' => "Room {$validated['room_number']} on floor {$validated['floor']} already exists."]);
+        }
+        
+        $hostel->rooms()->create([
+            'room_type_id' => $validated['room_type_id'],
+            'room_number' => $validated['room_number'],
+            'floor' => $validated['floor'],
+            'status' => 'available',
+            'current_occupants' => 0,
+            'max_occupants' => $roomType->capacity,
+        ]);
+        
+        return redirect()->back()->with('success', 'Room added successfully.');
+    }
+
+    /**
+     * Bulk delete rooms
+     */
+    public function bulkDeleteRooms(Request $request, $hostelId)
+    {
+        \Log::info('Bulk delete rooms called', [
+            'hostel_id' => $hostelId,
+            'request_data' => $request->all()
+        ]);
+        
+        $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
+        
+        // Check if this is the final confirmation step
+        if (request()->has('final_confirmation') && request('final_confirmation') === 'true') {
+            $validated = $request->validate([
+                'room_ids' => 'required|array',
+                'room_ids.*' => 'required|integer|exists:rooms,id'
+            ]);
+            
+            \Log::info('Validation passed', ['validated' => $validated]);
+            
+            $deletedCount = 0;
+            $roomsWithOccupants = [];
+            
+            foreach ($validated['room_ids'] as $roomId) {
+                $room = $hostel->rooms()->find($roomId);
+                
+                if ($room) {
+                    // Check if room has occupants
+                    $occupants = $room->roomAssignments()->where('status', 'active')->count();
+                    
+                    \Log::info('Processing room', [
+                        'room_id' => $roomId,
+                        'room_number' => $room->room_number,
+                        'occupants' => $occupants
+                    ]);
+                    
+                    if ($occupants > 0) {
+                        $roomsWithOccupants[] = "Room {$room->room_number} (has {$occupants} occupant(s))";
+                    } else {
+                        $room->delete();
+                        $deletedCount++;
+                        \Log::info('Room deleted', ['room_id' => $roomId]);
+                    }
+                }
+            }
+            
+            $message = "Successfully deleted {$deletedCount} room(s).";
+            
+            if (!empty($roomsWithOccupants)) {
+                $message .= " Could not delete the following rooms as they have occupants: " . implode(', ', $roomsWithOccupants);
+            }
+            
+            \Log::info('Bulk delete completed', [
+                'deleted_count' => $deletedCount,
+                'rooms_with_occupants' => $roomsWithOccupants,
+                'message' => $message
+            ]);
+            
+            return redirect()->back()->with('success', $message);
+        }
+        
+        // Check if this is the third confirmation step
+        if (request()->has('third_confirmation') && request('third_confirmation') === 'true') {
+            $validated = $request->validate([
+                'room_ids' => 'required|array',
+                'room_ids.*' => 'required|integer|exists:rooms,id'
+            ]);
+            
+            $rooms = $hostel->rooms()->whereIn('id', $validated['room_ids'])->with('roomType')->get();
+            $step = 3;
+            return view('warden.rooms.confirm_bulk_delete', compact('hostel', 'rooms', 'step'));
+        }
+        
+        // Check if this is the second confirmation step
+        if (request()->has('second_confirmation') && request('second_confirmation') === 'true') {
+            $validated = $request->validate([
+                'room_ids' => 'required|array',
+                'room_ids.*' => 'required|integer|exists:rooms,id'
+            ]);
+            
+            $rooms = $hostel->rooms()->whereIn('id', $validated['room_ids'])->with('roomType')->get();
+            $step = 2;
+            return view('warden.rooms.confirm_bulk_delete', compact('hostel', 'rooms', 'step'));
+        }
+        
+        // First confirmation step
+        $validated = $request->validate([
+            'room_ids' => 'required|array',
+            'room_ids.*' => 'required|integer|exists:rooms,id'
+        ]);
+        
+        $rooms = $hostel->rooms()->whereIn('id', $validated['room_ids'])->with('roomType')->get();
+        $step = 1;
+        return view('warden.rooms.confirm_bulk_delete', compact('hostel', 'rooms', 'step'));
     }
 
     /**
@@ -784,13 +968,27 @@ class HostelController extends Controller
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
         $studentIds = $request->input('student_ids', []);
+        
         if (empty($studentIds)) {
             return redirect()->back()->with('error', 'No students selected for deletion.');
         }
-        // Delete RoomApplications and Users
-        \App\Models\RoomApplication::where('hostel_id', $hostel->id)->whereIn('student_id', $studentIds)->delete();
-        \App\Models\User::whereIn('id', $studentIds)->delete();
-        return redirect()->back()->with('success', 'Selected students deleted successfully.');
+
+        // Check if this is the confirmation step
+        if ($request->input('confirmed') === 'true') {
+            // Delete RoomApplications and Users
+            \App\Models\RoomApplication::where('hostel_id', $hostel->id)->whereIn('student_id', $studentIds)->delete();
+            \App\Models\User::whereIn('id', $studentIds)->delete();
+            return redirect()->back()->with('success', 'Selected students deleted successfully.');
+        } else {
+            // First step - show confirmation
+            $students = \App\Models\User::whereIn('id', $studentIds)->get();
+            
+            if ($students->isEmpty()) {
+                return redirect()->back()->with('error', 'No valid students found for deletion.');
+            }
+            
+            return view('warden.hostels.students.delete-confirmation', compact('students', 'studentIds', 'hostel'));
+        }
     }
 
     public function updateFees(Request $request, $id)

@@ -5,7 +5,20 @@
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Room Applications</h1>
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        <a href="{{ route('warden.room-allotment.index') }}" class="btn btn-info">
+            <i class="fas fa-bed"></i> Room Allotment
+        </a>
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Room Applications</h5>
 </div>
 
 <!-- Content Row -->
@@ -46,8 +59,18 @@
                                     <td>{{ $app->roomType->type ?? '-' }}</td>
                                     <td>{{ $app->application_date }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $app->status === 'pending' ? 'warning' : ($app->status === 'approved' ? 'success' : 'danger') }}">
-                                            {{ ucfirst($app->status) }}
+                                        @php
+                                            $displayStatus = $app->getDisplayStatus();
+                                            $badgeClass = $displayStatus === 'pending' ? 'warning' : 
+                                                         ($displayStatus === 'approved' ? 'success' : 
+                                                         ($displayStatus === 'reapproved' ? 'success' : 'danger'));
+                                        @endphp
+                                        <span class="badge badge-{{ $badgeClass }}">
+                                            @if($displayStatus === 'reapproved')
+                                                <i class="fas fa-check-double mr-1"></i>Reapproved
+                                            @else
+                                                {{ ucfirst($displayStatus) }}
+                                            @endif
                                         </span>
                                     </td>
                                     <td>
@@ -65,6 +88,11 @@
                                                         <i class="fas fa-times"></i>
                                                     </button>
                                                 </form>
+                                            @elseif($app->status == 'rejected')
+                                                <a href="{{ route('warden.room-allotment.show', $app->id) }}" 
+                                                   class="btn btn-warning btn-sm" title="Reapprove & Allot Room">
+                                                    <i class="fas fa-check-double"></i>
+                                                </a>
                                             @endif
                                             <a href="{{ route('warden.applications.show', $app) }}" 
                                                class="btn btn-info btn-sm" title="View Details">

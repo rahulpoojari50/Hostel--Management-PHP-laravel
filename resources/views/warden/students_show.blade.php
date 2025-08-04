@@ -5,12 +5,8 @@
 @section('content')
 <div class="container-fluid py-4">
     @include('components.breadcrumb', [
-        'pageTitle' => 'Student Profile & Parent Details',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Students', 'url' => route('warden.hostels.students', $assignment->room->hostel->id ?? 1)],
-            ['name' => $student->name, 'url' => '']
-        ]
+        'pageTitle' => $pageTitle,
+        'breadcrumbs' => $breadcrumbs
     ])
 
     <!-- Student Basic Information -->

@@ -42,6 +42,9 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('/manage-hostel/{hostel}', [HostelController::class, 'manage'])->name('manage-hostel.show');
     Route::post('/manage-hostel/{hostel}/room-types', [HostelController::class, 'storeRoomType'])->name('manage-hostel.room-types.store');
     Route::post('/manage-hostel/{hostel}/rooms', [HostelController::class, 'storeRooms'])->name('manage-hostel.rooms.store');
+    Route::post('/manage-hostel/{hostel}/rooms/single', [HostelController::class, 'storeSingleRoom'])->name('manage-hostel.rooms.single.store');
+    Route::post('/hostels/{hostel}/rooms/bulk-delete', [HostelController::class, 'bulkDeleteRooms'])->name('warden.hostels.rooms.bulk-delete');
+    Route::delete('/hostels/{hostel}/rooms/{room}', [RoomController::class, 'destroy'])->name('hostels.rooms.destroy');
     Route::post('/manage-hostel/{hostel}/add-rooms', [HostelController::class, 'addRooms'])->name('manage-hostel.add-rooms');
     Route::post('/manage-hostel/{hostel}/store-rooms-details', [HostelController::class, 'storeRoomsWithDetails'])->name('manage-hostel.store-rooms-details');
     Route::post('/manage-hostel/{hostel}/rent', [HostelController::class, 'updateRent'])->name('manage-hostel.rent.update');
@@ -70,15 +73,21 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::post('hostels/{hostel}/room-types/{roomType}/restore', [RoomTypeController::class, 'restore'])->name('hostels.room-types.restore');
     Route::delete('hostels/{hostel}/room-types/{roomType}/force-delete', [RoomTypeController::class, 'forceDelete'])->name('hostels.room-types.force-delete');
     Route::resource('applications', ApplicationController::class);
+    Route::get('/applications/{id}/reject-confirmation', [ApplicationController::class, 'rejectConfirmation'])->name('applications.reject-confirmation');
     Route::resource('meals', MealController::class);
     Route::get('hostels/{hostel}/students', [HostelController::class, 'students'])->name('hostels.students');
     Route::get('hostels/{hostel}/attendance', [HostelController::class, 'attendance'])->name('hostels.attendance');
     Route::get('hostels/{hostel}/attendance/mark', [HostelController::class, 'markAttendance'])->name('hostels.attendance.mark');
     Route::post('warden/hostels/{hostel}/attendance/mark', [HostelController::class, 'storeAttendance'])->name('warden.hostels.attendance.store');
     Route::get('warden/hostels/{hostel}/attendance/edit-form', [App\Http\Controllers\Warden\HostelController::class, 'ajaxEditAttendanceForm'])->name('warden.hostels.attendance.edit-form');
-    Route::get('hostels/{hostel}/rooms/manage', [RoomController::class, 'manage'])->name('hostels.rooms.manage');
+
     Route::get('hostels/{hostel}/rooms/bulk-create', [RoomController::class, 'bulkCreate'])->name('hostels.rooms.bulkCreate');
     Route::post('hostels/rooms/bulk-store', [RoomController::class, 'bulkStore'])->name('rooms.bulkStore');
+    Route::get('hostels/{hostel}/rooms/create', [RoomController::class, 'create'])->name('hostels.rooms.create');
+    Route::post('hostels/{hostel}/rooms', [RoomController::class, 'store'])->name('hostels.rooms.store');
+    Route::get('hostels/{hostel}/rooms/{room}/edit', [RoomController::class, 'edit'])->name('hostels.rooms.edit');
+    Route::put('hostels/{hostel}/rooms/{room}', [RoomController::class, 'update'])->name('hostels.rooms.update');
+    Route::delete('hostels/{hostel}/rooms/{room}', [RoomController::class, 'destroy'])->name('hostels.rooms.destroy');
     Route::post('hostels/{hostel}/students/add', [HostelController::class, 'addStudent'])->name('hostels.students.add');
     Route::post('hostels/{hostel}/students/bulk-upload', [HostelController::class, 'bulkUploadStudents'])->name('hostels.students.bulk_upload');
     Route::delete('hostels/{hostel}/students/delete', [HostelController::class, 'deleteStudents'])->name('hostels.students.delete');

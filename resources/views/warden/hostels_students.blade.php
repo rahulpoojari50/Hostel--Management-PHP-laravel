@@ -8,15 +8,24 @@
     $selectedHostelId = request('hostel_id') ?? ($hostels->count() === 1 ? $hostels->first()->id : $hostel->id ?? null);
     $selectedHostel = $hostels->where('id', $selectedHostelId)->first();
 @endphp
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Registered Students</h5>
+</div>
+
 <div class="container-fluid py-4">
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Registered Students',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
-            ['name' => 'Registered Students', 'url' => '']
-        ]
-    ])
     {{-- Remove the top Add Student and Bulk Upload Buttons --}}
     {{-- Add Student Modal --}}
     <div class="modal fade" id="addStudentModal" tabindex="-1" role="dialog" aria-labelledby="addStudentModalLabel" aria-hidden="true">
@@ -112,11 +121,11 @@
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Student Search Filters</h5>
       </div>
-      <form method="GET" action="" autocomplete="off">
+      <form method="GET" action="{{ route('warden.hostels.students', $selectedHostel ? $selectedHostel->id : $hostel->id) }}" autocomplete="off">
         <div class="row">
           <div class="col-md-4 mb-3">
             <label for="hostel_id">Select Hostel</label>
-            <select class="form-control" id="hostel_id" name="hostel_id" required onchange="this.form.submit()">
+            <select class="form-control" id="hostel_id" name="hostel_id" required onchange="window.location.href='{{ route('warden.hostels.students', ':hostel_id') }}'.replace(':hostel_id', this.value)">
               <option value="">-- Select Hostel --</option>
               @foreach($hostels as $h)
                 <option value="{{ $h->id }}" {{ $selectedHostelId == $h->id ? 'selected' : '' }}>{{ $h->name }}</option>
@@ -148,11 +157,9 @@
             <input name="room_no" list="room_no_list" class="form-control" placeholder="Enter or select Room No" value="{{ request('room_no') }}">
             <datalist id="room_no_list">
               <option value="none">None</option>
-              @if($selectedHostel->roomApplications)
+              @if($selectedHostel->rooms)
                 @php
-                  $roomNumbers = $selectedHostel->roomApplications->flatMap(function($app) use ($selectedHostel) {
-                    return optional($app->student)->roomAssignments->where('room.hostel_id', $selectedHostel->id)->pluck('room.room_number');
-                  })->unique()->filter();
+                  $roomNumbers = $selectedHostel->rooms->pluck('room_number')->unique()->filter();
                 @endphp
                 @foreach($roomNumbers as $roomNo)
                   <option value="{{ $roomNo }}">{{ $roomNo }}</option>
@@ -184,7 +191,7 @@
         @csrf
         @method('DELETE')
         <div class="mb-3 d-flex justify-content-end align-items-center">
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete the selected students?')">
+            <button type="submit" class="btn btn-danger">
                 <i class="fas fa-trash"></i> Delete Selected
             </button>
         </div>

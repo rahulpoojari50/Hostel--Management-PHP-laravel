@@ -14,14 +14,8 @@
 </div>
 
 @include('components.breadcrumb', [
-    'pageTitle' => 'Edit Room Type',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
-        ['name' => $hostel->name, 'url' => route('warden.manage-hostel.show', $hostel)],
-        ['name' => 'Room Types', 'url' => route('warden.hostels.room-types.index', $hostel)],
-        ['name' => 'Edit Room Type', 'url' => '']
-    ]
+    'pageTitle' => $pageTitle,
+    'breadcrumbs' => $breadcrumbs
 ])
 
 <!-- Content Row -->

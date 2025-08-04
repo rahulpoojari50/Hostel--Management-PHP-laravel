@@ -5,7 +5,23 @@
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Student Dashboard</h1>
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', [
+            'breadcrumbs' => [
+                ['name' => 'Home', 'url' => url('/')],
+                ['name' => 'Student Dashboard', 'url' => '']
+            ]
+        ])
+    </div>
+    <div>
+        {{-- <h1 class="h3 mb-0 text-gray-800">Student Dashboard</h1> --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Student Dashboard</h5>
 </div>
 
 <div class="row">

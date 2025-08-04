@@ -3,27 +3,28 @@
 @section('title', 'Hostel Details')
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Hostel Details – {{ $hostel->name }}</h1>
-        <div>
-            <a href="#students-list" class="btn btn-info btn-sm mr-2"><i class="fas fa-users"></i> View Students</a>
-            <button type="button" class="btn btn-danger btn-sm delete-hostel-btn" 
-                    data-hostel-id="{{ $hostel->id }}" 
-                    data-hostel-name="{{ $hostel->name }}">
-                <i class="fas fa-trash"></i> Delete Hostel
-            </button>
-        </div>
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
     </div>
+    <div>
+        <a href="#students-list" class="btn btn-info btn-sm mr-2"><i class="fas fa-users"></i> View Students</a>
+        <button type="button" class="btn btn-danger btn-sm delete-hostel-btn" 
+                data-hostel-id="{{ $hostel->id }}" 
+                data-hostel-name="{{ $hostel->name }}">
+            <i class="fas fa-trash"></i> Delete Hostel
+        </button>
+    </div>
+</div>
 
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Hostel Details',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
-            ['name' => 'Hostel Details', 'url' => '']
-        ]
-    ])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Hostel Details – {{ $hostel->name }}</h5>
+</div>
+
+<div class="container-fluid py-4">
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow mb-4">
@@ -79,8 +80,13 @@
                 </div>
             </div>
             <div class="card shadow mb-4" id="students-list">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Students Allotted Rooms</h6>
+                    <div>
+                        <a href="{{ route('warden.hostels.index') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left fa-sm"></i> Back to Hostels
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body table-responsive">
                     <table class="table table-bordered mb-0">

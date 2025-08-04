@@ -3,13 +3,27 @@
 @section('title', 'Search Results')
 
 @section('content')
-@include('components.breadcrumb', [
-    'pageTitle' => 'Search Results',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Search Results', 'url' => '']
-    ]
-])
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', [
+            'breadcrumbs' => [
+                ['name' => 'Home', 'url' => url('/')],
+                ['name' => 'Search Results', 'url' => '']
+            ]
+        ])
+    </div>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Search Results</h5>
+</div>
+
 <div class="container-fluid">
     <h4 class="mb-4">Search Results for: <span class="text-primary">{{ $q }}</span></h4>
     @if(!$q)

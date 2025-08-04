@@ -4,12 +4,8 @@
 
 @section('content')
 @include('components.breadcrumb', [
-    'pageTitle' => 'Edit Student',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Students', 'url' => route('warden.hostels.students', $student->id)],
-        ['name' => 'Edit Student', 'url' => '']
-    ]
+    'pageTitle' => $pageTitle,
+    'breadcrumbs' => $breadcrumbs
 ])
 <div class="container-fluid py-4">
     <div class="card shadow mb-4">

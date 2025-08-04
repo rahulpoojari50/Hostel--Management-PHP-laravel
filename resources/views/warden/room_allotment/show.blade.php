@@ -6,9 +6,14 @@
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Allot Room to {{ $application->student->name }}</h1>
-    <a href="{{ route('warden.room-allotment.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
-        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Applications
-    </a>
+    <div>
+        <a href="{{ route('warden.applications.index') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-list"></i> View All Applications
+        </a>
+        <a href="{{ route('warden.room-allotment.index') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to Room Allotment
+        </a>
+    </div>
 </div>
 
 <!-- Application Details -->
@@ -34,7 +39,7 @@
                     <div class="col-md-6">
                         <h6 class="font-weight-bold">Application Information</h6>
                         <p><strong>Hostel:</strong> {{ $application->hostel->name }}</p>
-                        <p><strong>Room Type:</strong> {{ $application->roomType->type }} ({{ $application->roomType->capacity }} beds)</p>
+                        <p><strong>Room Type:</strong> {{ $application->roomType ? $application->roomType->type : 'Unknown' }} ({{ $application->roomType ? $application->roomType->capacity : 0 }} beds)</p>
                         <p><strong>Applied Date:</strong> {{ $application->created_at->format('M d, Y H:i') }}</p>
                         <p><strong>Status:</strong> 
                             <span class="badge badge-warning">Pending</span>
@@ -58,17 +63,18 @@
                     <form action="{{ route('warden.room-allotment.allot', $application) }}" method="POST">
                         @csrf
                         <div class="form-group">
-                            <label for="room_id">Available Rooms for {{ $selectedRoomType ? $selectedRoomType->type : $application->roomType->type }}</label>
+                            <label for="room_id">Available Rooms for {{ $selectedRoomType ? $selectedRoomType->type : ($application->roomType ? $application->roomType->type : 'Unknown Type') }}</label>
                             <select class="form-control" id="room_id" name="room_id" required>
                                 <option value="">Select a room...</option>
                                 @foreach($availableRooms as $room)
                                     @php
                                         $currentOccupants = $room->roomAssignments->where('status', 'active')->count();
-                                        $availableBeds = $room->roomType->capacity - $currentOccupants;
+                                        $maxOccupants = $room->max_occupants ?? ($room->roomType ? $room->roomType->capacity : 0);
+                                        $availableBeds = $maxOccupants - $currentOccupants;
                                     @endphp
                                     <option value="{{ $room->id }}">
                                         Room {{ $room->room_number }} - 
-                                        {{ $currentOccupants }}/{{ $room->roomType->capacity }} beds occupied 
+                                        {{ $currentOccupants }}/{{ $maxOccupants }} beds occupied 
                                         ({{ $availableBeds }} available)
                                     </option>
                                 @endforeach
@@ -108,7 +114,7 @@
                                 <option value="">Select Room Type</option>
                                 @foreach($application->hostel->roomTypes as $type)
                                     @if($application->room_type_id != $type->id)
-                                        <option value="{{ $type->id }}" {{ request('room_type_id') == $type->id ? 'selected' : '' }}>{{ $type->type }} ({{ $type->capacity }} beds)</option>
+                                        <option value="{{ $type->id }}" {{ request('room_type_id') == $type->id ? 'selected' : '' }}>{{ $type->type }} ({{ $type->capacity ?? 0 }} beds)</option>
                                     @endif
                                 @endforeach
                             </select>
@@ -147,11 +153,12 @@
                                 @foreach($availableRooms as $room)
                                     @php
                                         $currentOccupants = $room->roomAssignments->where('status', 'active')->count();
-                                        $availableBeds = $room->roomType->capacity - $currentOccupants;
+                                        $maxOccupants = $room->max_occupants ?? ($room->roomType ? $room->roomType->capacity : 0);
+                                        $availableBeds = $maxOccupants - $currentOccupants;
                                     @endphp
                                     <tr>
                                         <td><strong>{{ $room->room_number }}</strong></td>
-                                        <td>{{ $room->roomType->capacity }} beds</td>
+                                        <td>{{ $maxOccupants }} beds</td>
                                         <td>{{ $currentOccupants }}</td>
                                         <td>
                                             <span class="badge badge-success">{{ $availableBeds }}</span>

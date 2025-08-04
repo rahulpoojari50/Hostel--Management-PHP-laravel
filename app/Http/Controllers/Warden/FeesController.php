@@ -25,7 +25,15 @@ class FeesController extends Controller
     {
         // For now, just show the Add Fees form for the first hostel managed by the warden
         $hostel = Hostel::where('warden_id', auth()->id())->first();
-        return view('warden.fees.index', compact('hostel'));
+        
+        $pageTitle = 'Add Fees';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Fees', 'url' => route('warden.fees.index')],
+            ['name' => 'Add Fees', 'url' => '']
+        ];
+        
+        return view('warden.fees.index', compact('hostel', 'pageTitle', 'breadcrumbs'));
     }
 
     public function createMissingFees($hostelId)
@@ -85,7 +93,19 @@ class FeesController extends Controller
     public function studentStatus(Request $request)
     {
         $perPage = $request->input('per_page', 10);
+        $hostels = Hostel::where('warden_id', auth()->id())->get();
+        $selectedHostelId = $request->input('hostel_id');
+        $selectedHostel = $hostels->where('id', $selectedHostelId)->first();
+        
         $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        
+        // Filter by hostel if selected
+        if ($selectedHostel) {
+            $query->whereHas('roomAssignments.room', function($q) use ($selectedHostel) {
+                $q->where('hostel_id', $selectedHostel->id);
+            });
+        }
+        
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -96,14 +116,41 @@ class FeesController extends Controller
                   ;
             });
         }
-        $students = $query->paginate($perPage)->appends($request->only('search', 'per_page'));
-        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
-        return view('warden.fees.student_status', compact('students', 'feeTypes'));
+        
+        $students = $query->paginate($perPage)->appends($request->only('search', 'per_page', 'hostel_id'));
+        
+        // Get fee types based on selected hostel or all fee types if no hostel selected
+        if ($selectedHostel && is_array($selectedHostel->fees)) {
+            $feeTypes = collect($selectedHostel->fees)->pluck('type')->toArray();
+        } else {
+            $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        }
+        
+        $pageTitle = 'Student Fee Status';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Fees', 'url' => route('warden.fees.index')],
+            ['name' => 'Student Status', 'url' => '']
+        ];
+        
+        return view('warden.fees.student_status', compact('students', 'feeTypes', 'hostels', 'selectedHostel', 'selectedHostelId', 'pageTitle', 'breadcrumbs'));
     }
 
     public function exportCsv(Request $request)
     {
+        $hostels = Hostel::where('warden_id', auth()->id())->get();
+        $selectedHostelId = $request->input('hostel_id');
+        $selectedHostel = $hostels->where('id', $selectedHostelId)->first();
+        
         $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        
+        // Filter by hostel if selected
+        if ($selectedHostel) {
+            $query->whereHas('roomAssignments.room', function($q) use ($selectedHostel) {
+                $q->where('hostel_id', $selectedHostel->id);
+            });
+        }
+        
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -115,7 +162,13 @@ class FeesController extends Controller
             });
         }
         $students = $query->get();
-        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        
+        // Get fee types based on selected hostel or all fee types if no hostel selected
+        if ($selectedHostel && is_array($selectedHostel->fees)) {
+            $feeTypes = collect($selectedHostel->fees)->pluck('type')->toArray();
+        } else {
+            $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        }
 
         $filename = 'student_fees_status_' . date('Y-m-d_H-i-s') . '.csv';
         
@@ -123,7 +176,7 @@ class FeesController extends Controller
         $csvContent = '';
         
                     // Write headers
-            $headerRow = ['Student Name', 'USN', 'Email', 'Parent Email', 'Hostel Name'];
+            $headerRow = ['Student Name', 'USN', 'Email', 'Parent Email'];
         foreach ($feeTypes as $type) {
             $headerRow[] = ucwords(str_replace('_', ' ', $type)) . ' Status';
             $headerRow[] = ucwords(str_replace('_', ' ', $type)) . ' Amount';
@@ -141,8 +194,7 @@ class FeesController extends Controller
                     $student->name,
                     $student->usn ?? '-',
                     $student->email,
-                    $student->studentProfile->father_email ?? $student->parent_email ?? '-',
-                    $hostelName
+                    $student->studentProfile->father_email ?? $student->parent_email ?? '-'
                 ];
 
             foreach ($feeTypes as $type) {
@@ -164,7 +216,19 @@ class FeesController extends Controller
 
     public function exportPdf(Request $request)
     {
+        $hostels = Hostel::where('warden_id', auth()->id())->get();
+        $selectedHostelId = $request->input('hostel_id');
+        $selectedHostel = $hostels->where('id', $selectedHostelId)->first();
+        
         $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        
+        // Filter by hostel if selected
+        if ($selectedHostel) {
+            $query->whereHas('roomAssignments.room', function($q) use ($selectedHostel) {
+                $q->where('hostel_id', $selectedHostel->id);
+            });
+        }
+        
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -176,7 +240,13 @@ class FeesController extends Controller
             });
         }
         $students = $query->get();
-        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        
+        // Get fee types based on selected hostel or all fee types if no hostel selected
+        if ($selectedHostel && is_array($selectedHostel->fees)) {
+            $feeTypes = collect($selectedHostel->fees)->pluck('type')->toArray();
+        } else {
+            $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        }
 
         $data = [
             'students' => $students,
@@ -191,7 +261,19 @@ class FeesController extends Controller
 
     public function exportWord(Request $request)
     {
+        $hostels = Hostel::where('warden_id', auth()->id())->get();
+        $selectedHostelId = $request->input('hostel_id');
+        $selectedHostel = $hostels->where('id', $selectedHostelId)->first();
+        
         $query = User::where('role', 'student')->with(['studentFees', 'roomAssignments.room.hostel', 'studentProfile']);
+        
+        // Filter by hostel if selected
+        if ($selectedHostel) {
+            $query->whereHas('roomAssignments.room', function($q) use ($selectedHostel) {
+                $q->where('hostel_id', $selectedHostel->id);
+            });
+        }
+        
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -203,7 +285,13 @@ class FeesController extends Controller
             });
         }
         $students = $query->get();
-        $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        
+        // Get fee types based on selected hostel or all fee types if no hostel selected
+        if ($selectedHostel && is_array($selectedHostel->fees)) {
+            $feeTypes = collect($selectedHostel->fees)->pluck('type')->toArray();
+        } else {
+            $feeTypes = \App\Models\StudentFee::distinct()->pluck('fee_type')->toArray();
+        }
 
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
@@ -222,7 +310,6 @@ class FeesController extends Controller
         $table->addCell(1500)->addText('USN', ['bold' => true]);
         $table->addCell(2000)->addText('Email', ['bold' => true]);
         $table->addCell(2000)->addText('Parent Email', ['bold' => true]);
-        $table->addCell(2000)->addText('Hostel Name', ['bold' => true]);
         
         foreach ($feeTypes as $type) {
             $table->addCell(1500)->addText(ucwords(str_replace('_', ' ', $type)) . ' Status', ['bold' => true]);
@@ -239,7 +326,6 @@ class FeesController extends Controller
             $table->addCell(1500)->addText($student->usn ?? '-');
             $table->addCell(2000)->addText($student->email);
             $table->addCell(2000)->addText($student->studentProfile->father_email ?? $student->parent_email ?? '-');
-            $table->addCell(2000)->addText($hostelName);
 
             foreach ($feeTypes as $type) {
                 $fee = $student->studentFees->where('fee_type', $type)->first();

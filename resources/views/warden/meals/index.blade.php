@@ -3,15 +3,25 @@
 @section('title', 'Meals Management')
 
 @section('content')
-<div class="container-fluid py-4">
-    @include('components.breadcrumb', [
-        'pageTitle' => 'Meals Management',
-        'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
-            ['name' => 'Meals', 'url' => '']
-        ]
-    ])
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        <a href="{{ route('warden.meals.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Add New Meal
+        </a>
+    </div>
+</div>
 
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Meals Management</h5>
+</div>
+
+<div class="container-fluid py-4">
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-lg-12">

@@ -25,7 +25,14 @@ class MealController extends Controller
             ->orderBy('meal_date')
             ->orderBy('meal_type')
             ->get();
-        return view('warden.meals.index', compact('meals'));
+            
+        $pageTitle = 'Meals Management';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Meals', 'url' => '']
+        ];
+        
+        return view('warden.meals.index', compact('meals', 'pageTitle', 'breadcrumbs'));
     }
 
     public function create()

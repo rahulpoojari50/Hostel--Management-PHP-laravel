@@ -5,16 +5,26 @@
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    {{-- <h1 class="h3 mb-0 text-gray-800">Room Allotment</h1> --}}
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', [
+            'breadcrumbs' => [
+                ['name' => 'Hostel Dashboard', 'url' => url('/warden/dashboard')],
+                ['name' => 'Room Allotment', 'url' => '']
+            ]
+        ])
+    </div>
+    <div>
+        <a href="{{ route('warden.applications.index') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> View All Applications
+        </a>
+    </div>
 </div>
 
-@include('components.breadcrumb', [
-    'pageTitle' => 'Room Allotment',
-    'breadcrumbs' => [
-        ['name' => 'Hostel Dashboard', 'url' => url('/warden/dashboard')],
-        ['name' => 'Room Allotment', 'url' => '']
-    ]
-])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Room Allotment</h5>
+</div>
 
 {{-- Removed Add Room Type Button and Modal --}}
 
@@ -46,7 +56,7 @@
                     @include('warden.room_allotment._table', ['pendingApplications' => $pendingApplications])
                 </div>
                 <div class="mb-3 d-flex justify-content-end align-items-center">
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject the selected applications?')">
+                    <button type="submit" class="btn btn-danger btn-sm" id="bulk-reject-btn">
                         <i class="fas fa-times"></i> Reject Selected
                     </button>
                 </div>
@@ -125,6 +135,29 @@
             });
         }
         setInterval(refreshPendingApplications, 10000); // 10 seconds
+
+        // Handle bulk reject form submission
+        const bulkRejectForm = document.getElementById('bulkRejectForm');
+        const bulkRejectBtn = document.getElementById('bulk-reject-btn');
+        
+        if (bulkRejectForm && bulkRejectBtn) {
+            bulkRejectForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Check if any applications are selected
+                const selectedApplications = document.querySelectorAll('input[name="application_ids[]"]:checked');
+                if (selectedApplications.length === 0) {
+                    alert('Please select at least one application to reject.');
+                    return;
+                }
+                
+                // Show confirmation dialog
+                if (confirm('Are you sure you want to reject the selected applications? This action will require additional confirmation.')) {
+                    // Submit the form
+                    bulkRejectForm.submit();
+                }
+            });
+        }
     });
 </script>
 @endpush 

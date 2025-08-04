@@ -3,27 +3,62 @@
 @section('title', 'Student Fee Status')
 
 @section('content')
-@include('components.breadcrumb', [
-    'pageTitle' => 'Student Fee Status',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Fees', 'url' => route('warden.fees.index')],
-        ['name' => 'Student Status', 'url' => '']
-    ]
-])
-<form method="GET" action="" class="mb-3 d-flex align-items-center flex-wrap" style="max-width: 600px;">
-                <input type="text" name="search" class="form-control mr-2" placeholder="Search by name, email, or USN" value="{{ request('search') }}" style="max-width:200px;">
-    <button type="submit" class="btn btn-primary mr-2">Search</button>
-    <div class="d-flex align-items-center" style="white-space:nowrap;">
-        <label class="mb-0 mr-2">Show</label>
-        <select name="per_page" class="form-control mr-2" style="width:auto;display:inline-block;min-width:60px;">
-            @foreach([10, 25, 50, 100] as $size)
-                <option value="{{ $size }}" {{ request('per_page', 10) == $size ? 'selected' : '' }}>{{ $size }}</option>
-            @endforeach
-        </select>
-        <span class="ml-1"></span>
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
     </div>
-</form>
+    <div>
+        {{-- Action buttons can go here --}}
+    </div>
+</div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Student Fee Status</h5>
+</div>
+
+<!-- Student Search Filters -->
+<div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Student Search Filters</h5>
+    </div>
+    <form method="GET" action="" autocomplete="off">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="hostel_id">Select Hostel</label>
+                <select class="form-control" id="hostel_id" name="hostel_id" onchange="this.form.submit()">
+                    <option value="">-- Select Hostel --</option>
+                    @foreach($hostels as $hostel)
+                        <option value="{{ $hostel->id }}" {{ $selectedHostelId == $hostel->id ? 'selected' : '' }}>{{ $hostel->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @if($selectedHostel)
+            <div class="col-md-4 mb-3">
+                <label>Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Search by name, email, or USN" value="{{ request('search') }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>Show</label>
+                <select name="per_page" class="form-control">
+                    @foreach([10, 25, 50, 100] as $size)
+                        <option value="{{ $size }}" {{ request('per_page', 10) == $size ? 'selected' : '' }}>{{ $size }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
+        </div>
+        @if($selectedHostel)
+        <div class="row">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+        @endif
+    </form>
+</div>
 <div class="row">
     <div class="col-lg-12">
         <div class="card shadow mb-4">
@@ -56,7 +91,6 @@
                                     <th>USN</th>
                                     <th>Email</th>
                                     <th>Parent Email</th>
-                                    <th>Hostel Name</th>
                                     @foreach($feeTypes as $type)
                                         <th>{{ ucwords(str_replace('_', ' ', $type)) }}</th>
                                     @endforeach
@@ -74,13 +108,6 @@
                                     <td>{{ $student->usn ?? '-' }}</td>
                                     <td>{{ $student->email }}</td>
                                     <td>{{ $student->studentProfile->father_email ?? $student->parent_email ?? '-' }}</td>
-                                    <td>
-                                        @php
-                                            $assignment = $student->roomAssignments->where('status', 'active')->first();
-                                            $hostelName = $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : '-';
-                                        @endphp
-                                        {{ $hostelName }}
-                                    </td>
                                     @foreach($feeTypes as $type)
                                         @php
                                             $fee = $student->studentFees->where('fee_type', $type)->first();

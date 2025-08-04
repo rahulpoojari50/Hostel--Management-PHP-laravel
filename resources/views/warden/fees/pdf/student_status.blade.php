@@ -112,11 +112,10 @@
     <table>
         <thead>
                             <tr>
-                    <th style="width: 15%;">Student Name</th>
-                    <th style="width: 10%;">USN</th>
-                    <th style="width: 20%;">Email</th>
-                    <th style="width: 20%;">Parent Email</th>
-                    <th style="width: 15%;">Hostel Name</th>
+                    <th style="width: 20%;">Student Name</th>
+                    <th style="width: 15%;">USN</th>
+                    <th style="width: 25%;">Email</th>
+                    <th style="width: 25%;">Parent Email</th>
                 @foreach($feeTypes as $type)
                     <th style="width: 7%;">{{ ucwords(str_replace('_', ' ', $type)) }} Status</th>
                     <th style="width: 7%;">{{ ucwords(str_replace('_', ' ', $type)) }} Amount</th>
@@ -130,13 +129,6 @@
                     <td>{{ $student->usn ?? '-' }}</td>
                     <td>{{ $student->email }}</td>
                     <td>{{ $student->studentProfile->father_email ?? $student->parent_email ?? '-' }}</td>
-                    <td>
-                        @php
-                            $assignment = $student->roomAssignments->where('status', 'active')->first();
-                            $hostelName = $assignment && $assignment->room && $assignment->room->hostel ? $assignment->room->hostel->name : '-';
-                        @endphp
-                        {{ $hostelName }}
-                    </td>
                     @foreach($feeTypes as $type)
                         @php
                             $fee = $student->studentFees->where('fee_type', $type)->first();

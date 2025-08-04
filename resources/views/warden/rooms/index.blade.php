@@ -5,16 +5,19 @@
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    {{-- <h1 class="h3 mb-0 text-gray-800">Rooms Management</h1> --}}
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+    </div>
+    <div>
+        {{-- <h1 class="h3 mb-0 text-gray-800">Rooms Management</h1> --}}
+    </div>
 </div>
 
-@include('components.breadcrumb', [
-    'pageTitle' => 'Rooms Management',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Rooms Management', 'url' => '']
-    ]
-])
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Rooms Management</h5>
+</div>
 
 <!-- Content Row -->
 <div class="row">
