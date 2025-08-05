@@ -79,48 +79,73 @@
     </div>
 </div>
 
+
+
 <div class="row">
-    <!-- Weekly Meals Menu Card -->
+    <!-- Meal Menu Details Card -->
     <div class="col-lg-12 mb-4">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Weekly Meals Menu (Set by Warden)</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Meal Menu Details</h6>
             </div>
             <div class="card-body">
-                @if(isset($weeklyMenu) && count($weeklyMenu))
-                    <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Day</th>
-                                    @foreach($menuMealTypes as $type)
-                                        <th class="text-capitalize">{{ $type }}</th>
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($daysOfWeek as $day)
+                @if(isset($mealMenu) && count($mealMenu))
+                    @php
+                        $hasMealMenuData = false;
+                        $daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        $mealTypes = ['breakfast', 'lunch', 'snacks', 'dinner'];
+                        
+                        foreach ($daysOfWeek as $day) {
+                            foreach ($mealTypes as $type) {
+                                if (isset($mealMenu[$day][$type]) && !empty(trim($mealMenu[$day][$type]))) {
+                                    $hasMealMenuData = true;
+                                    break 2;
+                                }
+                            }
+                        }
+                    @endphp
+                    
+                    @if($hasMealMenuData)
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
                                     <tr>
-                                        <td class="font-weight-bold">{{ $day }}</td>
-                                        @foreach($menuMealTypes as $type)
-                                            <td>{{ $weeklyMenu[$day][$type] ?? '-' }}</td>
-                                        @endforeach
+                                        <th>Day</th>
+                                        <th class="text-capitalize">Breakfast</th>
+                                        <th class="text-capitalize">Lunch</th>
+                                        <th class="text-capitalize">Snacks</th>
+                                        <th class="text-capitalize">Dinner</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
+                                        <tr>
+                                            <td class="font-weight-bold">{{ $day }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['breakfast'] ?? '-' }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['lunch'] ?? '-' }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['snacks'] ?? '-' }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['dinner'] ?? '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No meal menu has been set by the warden for your hostel yet.
+                        </div>
+                    @endif
                 @elseif($assignment && $assignment->room && $assignment->room->hostel)
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> No weekly menu has been set by the warden for your hostel yet.
+                        <i class="fas fa-info-circle"></i> No meal menu has been set by the warden for your hostel yet.
                     </div>
                 @elseif($application && $application->isApproved() && $application->hostel)
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> No weekly menu has been set by the warden for your approved hostel yet.
+                        <i class="fas fa-info-circle"></i> No meal menu has been set by the warden for your approved hostel yet.
                     </div>
                 @else
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> You need to be assigned to a hostel to view the weekly meals menu.
+                        <i class="fas fa-exclamation-triangle"></i> You need to be assigned to a hostel to view the meal menu details.
                     </div>
                 @endif
             </div>

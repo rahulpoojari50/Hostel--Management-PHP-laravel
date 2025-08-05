@@ -112,21 +112,23 @@
                                         <td>{{ $student->usn ?? '-' }}</td>
                                         @foreach(['Breakfast','Lunch','Snacks','Dinner'] as $meal)
                                         <td class="text-center">
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Taken" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Taken') checked @endif>
-                                                <label class="form-check-label">P</label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Skipped" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Skipped') checked @endif>
-                                                <label class="form-check-label">A</label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="On Leave" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'On Leave') checked @endif>
-                                                <label class="form-check-label">L</label>
-                                            </div>
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Holiday" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Holiday') checked @endif>
-                                                <label class="form-check-label">H</label>
+                                            <div class="attendance-controls">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Taken" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Taken') checked @endif>
+                                                    <label class="form-check-label">P</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Skipped" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Skipped') checked @endif>
+                                                    <label class="form-check-label">A</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="On Leave" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'On Leave') checked @endif>
+                                                    <label class="form-check-label">L</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input status-radio" type="radio" name="status[{{ $student->id }}][{{ $meal }}]" value="Holiday" @if(isset($attendance[$meal][$student->id]) && $attendance[$meal][$student->id] == 'Holiday') checked @endif>
+                                                    <label class="form-check-label">H</label>
+                                                </div>
                                             </div>
                                         </td>
                                         @endforeach

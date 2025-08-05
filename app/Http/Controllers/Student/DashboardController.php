@@ -62,7 +62,12 @@ class DashboardController extends Controller
             }
         }
         
+        // Prepare meal menu from hostel->meal_menu (if available) - New structure with days as rows
+        $mealMenu = [];
+        if ($hostel && is_array($hostel->meal_menu)) {
+            $mealMenu = $hostel->meal_menu;
+        }
 
-        return view('student.dashboard', compact('application', 'assignment', 'groupedMeals', 'mealTypes', 'weeklyMenu', 'daysOfWeek', 'menuMealTypes'));
+        return view('student.dashboard', compact('application', 'assignment', 'groupedMeals', 'mealTypes', 'weeklyMenu', 'daysOfWeek', 'menuMealTypes', 'mealMenu'));
     }
 }

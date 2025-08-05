@@ -17,8 +17,17 @@
                     @php
                         $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                         $mealTypes = ['breakfast','lunch','snacks','dinner'];
-                        $menu = $hostel->menu ?? [];
-                        $hasMenuData = !empty(array_filter($menu, function($day) { return !empty(array_filter($day)); }));
+                        $mealMenu = $hostel->meal_menu ?? [];
+                        $hasMenuData = false;
+                        
+                        foreach ($days as $day) {
+                            foreach ($mealTypes as $type) {
+                                if (isset($mealMenu[strtolower($day)][$type]) && !empty(trim($mealMenu[strtolower($day)][$type]))) {
+                                    $hasMenuData = true;
+                                    break 2;
+                                }
+                            }
+                        }
                     @endphp
                     
                     @if($hasMenuData)
@@ -31,9 +40,10 @@
                                     @foreach($days as $day)
                                         <tr>
                                             <td class="font-weight-bold">{{ $day }}</td>
-                                            @foreach($mealTypes as $meal)
-                                                <td>{{ $menu[$day][$meal] ?? '-' }}</td>
-                                            @endforeach
+                                            <td>{{ $mealMenu[strtolower($day)]['breakfast'] ?? '-' }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['lunch'] ?? '-' }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['snacks'] ?? '-' }}</td>
+                                            <td>{{ $mealMenu[strtolower($day)]['dinner'] ?? '-' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -48,7 +58,7 @@
                     <div class="table-responsive mb-3">
                         <table class="table table-bordered mb-0">
                             <thead class="thead-light">
-                                <tr><th>Type</th><th>Rooms</th><th>Available</th><th>Occupied</th><th>Rent</th></tr>
+                                <tr><th>Type</th><th>Rooms</th><th>Available</th><th>Occupied</th></tr>
                             </thead>
                             <tbody>
                                 @foreach($hostel->roomTypes as $type)
@@ -56,16 +66,12 @@
                                         $totalRooms = $type->rooms->count();
                                         $available = $type->rooms->where('status', 'available')->count();
                                         $occupied = $totalRooms - $available;
-                                        $baseRent = $type->price_per_month;
-                                        $fees = method_exists($hostel, 'getTotalFeesForRoomType') ? $hostel->getTotalFeesForRoomType($type->id) : 0;
-                                        $total = $baseRent + $fees;
                                     @endphp
                                     <tr>
                                         <td>{{ $type->type }}</td>
                                         <td>{{ $totalRooms }}</td>
                                         <td>{{ $available }}</td>
                                         <td>{{ $occupied }}</td>
-                                        <td>₹{{ number_format($total, 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

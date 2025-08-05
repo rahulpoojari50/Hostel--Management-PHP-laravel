@@ -22,7 +22,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('warden.meals.update', $meal) }}" method="POST">
+                    <form action="{{ route('warden.meals.update', $meal->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         
@@ -61,7 +61,7 @@
                             <input type="date" 
                                    name="meal_date" 
                                    class="form-control @error('meal_date') is-invalid @enderror" 
-                                   value="{{ old('meal_date', $meal->meal_date) }}"
+                                   value="{{ old('meal_date', $meal->meal_date ? $meal->meal_date->format('Y-m-d') : '') }}"
                                    required>
                             @error('meal_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -73,7 +73,7 @@
                             <textarea name="menu_description" 
                                       class="form-control @error('menu_description') is-invalid @enderror" 
                                       rows="4" 
-                                      placeholder="Describe the menu items for this meal...">{{ old('menu_description', $meal->menu_description) }}</textarea>
+                                      placeholder="Describe the menu items for this meal...">{{ old('menu_description', $meal->menu_description ?? '') }}</textarea>
                             @error('menu_description')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

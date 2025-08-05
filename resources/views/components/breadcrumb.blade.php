@@ -2,7 +2,7 @@
     <div class="page-header-title">
         <h5 class="m-b-10">{{ $pageTitle ?? 'Dashboard' }}</h5>
     </div>
-    <ul class="breadcrumb">
+    <ul class="breadcrumb"> <!-- This was broken or missing -->
         @foreach($breadcrumbs ?? [] as $breadcrumb)
             <li class="breadcrumb-item {{ $loop->last ? 'active' : '' }}">
                 @if (!$loop->last && !empty($breadcrumb['url']))
@@ -13,4 +13,4 @@
             </li>
         @endforeach
     </ul>
-</div> 
+</div>

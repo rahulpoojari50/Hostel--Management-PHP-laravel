@@ -7,7 +7,7 @@
     @include('components.breadcrumb', [
         'pageTitle' => 'Select Hostel',
         'breadcrumbs' => [
-            ['name' => 'Home', 'url' => url('/')],
+            ['name' => 'Dashboard', 'url' => url('/')],
             ['name' => 'Select Hostel', 'url' => '']
         ]
     ])

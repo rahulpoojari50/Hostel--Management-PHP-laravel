@@ -21,11 +21,13 @@ class Hostel extends Model
         'room_2_share',
         'room_3_share',
         'menu',
+        'meal_menu',
     ];
 
     protected $casts = [
         'status' => 'string',
         'menu' => 'array',
+        'meal_menu' => 'array',
         'fees' => 'array',
     ];
 

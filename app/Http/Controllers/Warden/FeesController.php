@@ -28,8 +28,7 @@ class FeesController extends Controller
         
         $pageTitle = 'Add Fees';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Fees', 'url' => route('warden.fees.index')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Add Fees', 'url' => '']
         ];
         
@@ -128,8 +127,8 @@ class FeesController extends Controller
         
         $pageTitle = 'Student Fee Status';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Fees', 'url' => route('warden.fees.index')],
+            ['name' => 'Dasboard', 'url' => url('/warden/dashboard')],
+        
             ['name' => 'Student Status', 'url' => '']
         ];
         

@@ -18,7 +18,11 @@ class DashboardController extends Controller
         $hostelIds = $hostels->pluck('id');
 
         // Statistics
-        $totalStudents = RoomApplication::whereIn('hostel_id', $hostelIds)->where('status', 'approved')->count();
+        // Count students with applications (pending + approved) - matches students page logic
+        $totalStudents = \App\Models\RoomApplication::whereIn('hostel_id', $hostelIds)
+            ->whereIn('status', ['pending', 'approved'])
+            ->distinct('student_id')
+            ->count('student_id');
         $totalHostels = $hostels->count();
         $totalRooms = Room::whereIn('hostel_id', $hostelIds)->count();
         $pendingApplications = RoomApplication::whereIn('hostel_id', $hostelIds)->where('status', 'pending')->count();
@@ -38,7 +42,7 @@ class DashboardController extends Controller
         $pageTitle = 'Hostel Dashboard';
         $breadcrumbs = [
             ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Hostel Dashboard', 'url' => '']
+            ['name' => 'Dashboard', 'url' => '']
         ];
         return view('warden.dashboard', compact(
             'totalStudents',

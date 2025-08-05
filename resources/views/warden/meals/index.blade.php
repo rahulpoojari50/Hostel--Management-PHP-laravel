@@ -2,6 +2,35 @@
 
 @section('title', 'Meals Management')
 
+<style>
+    .menu-description-cell {
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e3e6f0;
+        font-size: 1rem;
+        color: #343a40;
+        min-width: 200px;
+        max-width: 400px;
+        word-break: break-word;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .meals-table thead th {
+        background: #4e73df;
+        color: #fff;
+        vertical-align: middle;
+    }
+    .meals-table tbody tr {
+        transition: background 0.2s;
+    }
+    .meals-table tbody tr:hover {
+        background: #f1f3fa;
+    }
+    .meals-table td, .meals-table th {
+        vertical-align: middle;
+    }
+</style>
+
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -50,22 +79,22 @@
                 <div class="card-body">
                     @if($meals->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-bordered" id="mealsTable" width="100%" cellspacing="0">
+                            <table class="table table-striped table-hover table-bordered meals-table" id="mealsTable" width="100%" cellspacing="0">
                                 <thead>
                                     <tr>
                                         <th>Hostel</th>
                                         <th>Type</th>
                                         <th>Date</th>
-                                        <th>Menu</th>
+                                        <th>Menu Description</th>
+                                        <th>Created At</th>
+                                        <th>Updated At</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($meals as $meal)
                                         <tr>
-                                            <td>
-                                                <strong>{{ $meal->hostel->name ?? 'N/A' }}</strong>
-                                            </td>
+                                            <td><strong>{{ $meal->hostel->name ?? 'N/A' }}</strong></td>
                                             <td>
                                                 <span class="badge badge-{{ $meal->meal_type === 'breakfast' ? 'info' : ($meal->meal_type === 'lunch' ? 'success' : ($meal->meal_type === 'dinner' ? 'primary' : 'warning')) }}">
                                                     {{ ucfirst($meal->meal_type) }}
@@ -77,32 +106,29 @@
                                             </td>
                                             <td>
                                                 @if($meal->menu_description)
-                                                    <span class="text-dark">{{ Str::limit($meal->menu_description, 50) }}</span>
+                                                    <div class="menu-description-cell">{{ $meal->menu_description }}</div>
                                                 @else
                                                     <span class="text-muted">No menu description</span>
                                                 @endif
                                             </td>
                                             <td>
+                                                {{ $meal->created_at ? $meal->created_at->format('d M Y H:i') : '' }}
+                                            </td>
+                                            <td>
+                                                {{ $meal->updated_at ? $meal->updated_at->format('d M Y H:i') : '' }}
+                                            </td>
+                                            <td>
                                                 <div class="btn-group" role="group">
-                                                    <a href="{{ route('warden.meals.show', $meal) }}" 
-                                                       class="btn btn-info btn-sm" 
-                                                       title="View Details">
+                                                    <a href="{{ route('warden.meals.show', $meal) }}" class="btn btn-info btn-sm" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="{{ route('warden.meals.edit', $meal) }}" 
-                                                       class="btn btn-warning btn-sm" 
-                                                       title="Edit Meal">
+                                                    <a href="{{ route('warden.meals.edit', $meal) }}" class="btn btn-warning btn-sm" title="Edit Meal">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <form action="{{ route('warden.meals.destroy', $meal) }}" 
-                                                          method="POST" 
-                                                          class="d-inline"
-                                                          onsubmit="return confirm('Are you sure you want to delete this meal?')">
+                                                    <form action="{{ route('warden.meals.destroy', $meal) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this meal?')">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" 
-                                                                class="btn btn-danger btn-sm" 
-                                                                title="Delete Meal">
+                                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete Meal">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </form>

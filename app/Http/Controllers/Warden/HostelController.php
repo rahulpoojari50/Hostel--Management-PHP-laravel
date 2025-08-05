@@ -33,10 +33,7 @@ class HostelController extends Controller
     {
         $hostels = Hostel::where('warden_id', Auth::id())->get();
         $pageTitle = 'Hostels Management';
-        $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Hostels Management', 'url' => '']
-        ];
+      
         return view('warden.hostels', compact('hostels', 'pageTitle', 'breadcrumbs'));
     }
 
@@ -86,8 +83,8 @@ class HostelController extends Controller
         
         $pageTitle = 'Hostel Details';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
+            
             ['name' => 'Hostel Details', 'url' => '']
         ];
         
@@ -103,8 +100,8 @@ class HostelController extends Controller
         
         $pageTitle = 'Edit Hostel';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
+            
             ['name' => 'Edit Hostel', 'url' => '']
         ];
         
@@ -192,50 +189,322 @@ class HostelController extends Controller
      */
     public function updateMenu(Request $request, $id)
     {
-        $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
-        $menu = $request->input('menu', []);
-        
-        // Clean up empty values and ensure proper structure
-        $cleanedMenu = [];
-        $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-        $mealTypes = ['breakfast','lunch','snacks','dinner'];
-        
-        foreach ($days as $day) {
-            $cleanedMenu[$day] = [];
-            foreach ($mealTypes as $mealType) {
-                $value = trim($menu[$day][$mealType] ?? '');
-                $cleanedMenu[$day][$mealType] = $value;
+        try {
+            // Debug logging
+            if ($request->has('debug')) {
+                \Log::info('Menu update request received', [
+                    'hostel_id' => $id,
+                    'warden_id' => Auth::id(),
+                    'menu_data' => $request->input('menu'),
+                    'all_data' => $request->all(),
+                    'method' => $request->method(),
+                    'url' => $request->url(),
+                    'form_submitted' => $request->has('form_submitted'),
+                    'csrf_token' => $request->has('_token'),
+                    'headers' => $request->headers->all()
+                ]);
             }
-        }
-        
-        $hostel->menu = $cleanedMenu;
-        $hostel->save();
-        
-        // Sync menu to meals table for all future dates (next 60 days)
-        $today = \Carbon\Carbon::today();
-        
-        for ($i = 0; $i < 60; $i++) {
-            $date = $today->copy()->addDays($i);
-            $dayName = $days[$date->dayOfWeek]; // Use the same day names as in the form
             
-            foreach ($mealTypes as $mealType) {
-                $menuDesc = $cleanedMenu[$dayName][$mealType] ?? null;
-                if ($menuDesc) {
-                    \App\Models\Meal::updateOrCreate(
-                        [
-                            'hostel_id' => $hostel->id,
-                            'meal_type' => $mealType,
-                            'meal_date' => $date->toDateString(),
-                        ],
-                        [
-                            'menu_description' => $menuDesc,
-                        ]
-                    );
+            $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
+            $menu = $request->input('menu', []);
+            
+            // Debug: Log the raw menu data
+            if ($request->has('debug')) {
+                \Log::info('Raw menu data received', [
+                    'menu' => $menu,
+                    'menu_type' => gettype($menu),
+                    'menu_count' => is_array($menu) ? count($menu) : 'not array',
+                    'request_all' => $request->all(),
+                    'request_inputs' => $request->input()
+                ]);
+            }
+            
+            // Validate that menu data is provided
+            if (empty($menu)) {
+                $errorMessage = 'No menu data provided. Please fill in at least one menu item.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+            
+            // Validate menu structure
+            if (!is_array($menu)) {
+                $errorMessage = 'Invalid menu data format. Please try again.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+            
+            // Clean up empty values and ensure proper structure
+            $cleanedMenu = [];
+            $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            $mealTypes = ['breakfast','lunch','snacks','dinner'];
+            
+            foreach ($days as $day) {
+                $cleanedMenu[$day] = [];
+                foreach ($mealTypes as $mealType) {
+                    $value = trim($menu[$day][$mealType] ?? '');
+                    $cleanedMenu[$day][$mealType] = $value;
                 }
             }
+            
+            // Debug: Log the cleaned menu data
+            if ($request->has('debug')) {
+                \Log::info('Cleaned menu data', [
+                    'cleaned_menu' => $cleanedMenu,
+                    'days_processed' => count($days),
+                    'meal_types_processed' => count($mealTypes)
+                ]);
+            }
+            
+            // Check if at least one menu item is filled
+            $hasContent = false;
+            foreach ($cleanedMenu as $day => $meals) {
+                foreach ($meals as $meal => $description) {
+                    if (!empty($description)) {
+                        $hasContent = true;
+                        break 2;
+                    }
+                }
+            }
+            
+            if (!$hasContent) {
+                $errorMessage = 'Please fill in at least one menu item before updating.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+            
+            // Save the menu to the hostel
+            $hostel->menu = $cleanedMenu;
+            $hostel->save();
+            
+            // Debug logging after save
+            if ($request->has('debug')) {
+                \Log::info('Menu saved successfully', [
+                    'hostel_id' => $hostel->id,
+                    'saved_menu' => $hostel->menu,
+                    'cleaned_menu' => $cleanedMenu
+                ]);
+            }
+            
+            // Update existing meals in the database to reflect the new menu
+            $mealsUpdated = 0;
+            $existingMeals = \App\Models\Meal::where('hostel_id', $hostel->id)
+                ->where('meal_date', '>=', \Carbon\Carbon::today())
+                ->get();
+            
+            foreach ($existingMeals as $meal) {
+                // Get the day name based on the meal date
+                $dayIndex = $meal->meal_date->dayOfWeek; // 0 = Sunday, 1 = Monday, etc.
+                $dayName = $days[$dayIndex];
+                $newMenuDesc = $cleanedMenu[$dayName][$meal->meal_type] ?? null;
+                
+                // Only update if the menu description has changed
+                if ($newMenuDesc !== $meal->menu_description) {
+                    $meal->menu_description = $newMenuDesc;
+                    $meal->save();
+                    $mealsUpdated++;
+                }
+            }
+            
+            // Count how many menu items were saved
+            $menuItemsCount = 0;
+            foreach ($cleanedMenu as $day => $meals) {
+                foreach ($meals as $meal => $description) {
+                    if (!empty($description)) {
+                        $menuItemsCount++;
+                    }
+                }
+            }
+            
+            $message = "Menu updated successfully! {$menuItemsCount} menu items have been saved.";
+            if ($mealsUpdated > 0) {
+                $message .= " {$mealsUpdated} existing meals have been updated with the new menu.";
+            }
+            
+            // Return redirect with flash message for better user experience
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'redirect' => route('warden.manage-hostel.show', $hostel)
+                ]);
+            }
+            
+            return redirect()->back()->with('success', $message);
+            
+        } catch (\Exception $e) {
+            \Log::error('Menu update error: ' . $e->getMessage());
+            \Log::error('Menu update error trace: ' . $e->getTraceAsString());
+            \Log::error('Menu update error file: ' . $e->getFile() . ':' . $e->getLine());
+            $errorMessage = 'An error occurred while updating the menu. Please try again.';
+            
+            // If in debug mode, show more detailed error
+            if ($request->has('debug')) {
+                $errorMessage .= ' Error: ' . $e->getMessage();
+            }
+            
+            // Return redirect with flash message for better user experience
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ]);
+            }
+            
+            return redirect()->back()->with('error', $errorMessage);
         }
-        
-        return redirect()->back()->with('success', 'Menu updated successfully. Meals for the next 60 days have been synced to student portal.');
+    }
+
+    /**
+     * Update meal menu for a hostel.
+     */
+    public function updateMealMenu(Request $request, $id)
+    {
+        try {
+            $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
+            $mealMenu = $request->input('meal_menu', []);
+            
+            // Debug logging
+            \Log::info('Meal menu update request received', [
+                'hostel_id' => $id,
+                'warden_id' => Auth::id(),
+                'meal_menu_data' => $mealMenu,
+                'all_data' => $request->all(),
+                'method' => $request->method(),
+                'url' => $request->url(),
+                'is_ajax' => $request->ajax()
+            ]);
+            
+            // Validate that meal menu data is provided
+            if (empty($mealMenu)) {
+                $errorMessage = 'No meal menu data provided. Please fill in at least one meal item.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+            
+            // Clean up and validate meal menu data for weekly format
+            $cleanedMealMenu = [];
+            $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            $mealTypes = ['breakfast', 'lunch', 'snacks', 'dinner'];
+            
+            foreach ($days as $day) {
+                $cleanedMealMenu[$day] = [];
+                foreach ($mealTypes as $mealType) {
+                    if (isset($mealMenu[$day][$mealType])) {
+                        $menuText = trim($mealMenu[$day][$mealType] ?? '');
+                        $cleanedMealMenu[$day][$mealType] = $menuText;
+                    } else {
+                        $cleanedMealMenu[$day][$mealType] = '';
+                    }
+                }
+            }
+            
+            // Check if at least one meal item is filled
+            $hasContent = false;
+            foreach ($cleanedMealMenu as $day => $meals) {
+                foreach ($meals as $mealType => $menuText) {
+                    if (!empty($menuText)) {
+                        $hasContent = true;
+                        break 2;
+                    }
+                }
+            }
+            
+            if (!$hasContent) {
+                $errorMessage = 'Please fill in at least one meal item before updating.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+            
+            // Save the meal menu to the hostel (using the weekly format)
+            $hostel->meal_menu = $cleanedMealMenu;
+            $hostel->save();
+            
+            // Update existing meals in the database to reflect the new menu
+            $mealsUpdated = 0;
+            $existingMeals = \App\Models\Meal::where('hostel_id', $hostel->id)
+                ->where('meal_date', '>=', \Carbon\Carbon::today())
+                ->get();
+            
+            foreach ($existingMeals as $meal) {
+                // Get the day name based on the meal date
+                $dayIndex = $meal->meal_date->dayOfWeek; // 0 = Sunday, 1 = Monday, etc.
+                $dayName = strtolower($days[$dayIndex]);
+                $newMenuDesc = $cleanedMealMenu[$dayName][$meal->meal_type] ?? '';
+                
+                // Only update if the menu description has changed
+                if ($newMenuDesc !== $meal->menu_description) {
+                    $meal->menu_description = $newMenuDesc;
+                    $meal->save();
+                    $mealsUpdated++;
+                }
+            }
+            
+            // Count how many meal items were saved
+            $mealItemsCount = 0;
+            foreach ($cleanedMealMenu as $day => $meals) {
+                foreach ($meals as $mealType => $menuText) {
+                    if (!empty($menuText)) {
+                        $mealItemsCount++;
+                    }
+                }
+            }
+            
+            $message = "Meal menu updated successfully! {$mealItemsCount} meal items have been saved.";
+            if ($mealsUpdated > 0) {
+                $message .= " {$mealsUpdated} existing meals have been updated with the new menu.";
+            }
+            
+            // Return JSON response for AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message
+                ]);
+            }
+            
+            return redirect()->back()->with('success', $message);
+            
+        } catch (\Exception $e) {
+            \Log::error('Meal menu update error: ' . $e->getMessage());
+            \Log::error('Meal menu update error trace: ' . $e->getTraceAsString());
+            
+            $errorMessage = 'An error occurred while updating the meal menu. Please try again.';
+            
+            // Return JSON response for AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ]);
+            }
+            
+            return redirect()->back()->with('error', $errorMessage);
+        }
     }
 
     /**
@@ -307,8 +576,8 @@ class HostelController extends Controller
         
         $pageTitle = 'Registered Students';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
+            
             ['name' => 'Registered Students', 'url' => '']
         ];
         
@@ -380,8 +649,8 @@ class HostelController extends Controller
         
         $pageTitle = 'Hostel Attendance';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Hostels Management', 'url' => route('warden.hostels.index')],
+            ['name' => 'Dasboard', 'url' => url('/warden/dashboard')],
+            
             ['name' => 'Hostel Attendance', 'url' => '']
         ];
         
@@ -475,7 +744,7 @@ class HostelController extends Controller
         
         $pageTitle = 'Manage Hostel';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dasboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Manage Hostel', 'url' => '']
         ];
         
@@ -496,7 +765,7 @@ class HostelController extends Controller
         
         $pageTitle = 'Manage Hostel';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Manage Hostel', 'url' => route('warden.manage-hostel.index')],
             ['name' => $hostel->name, 'url' => '']
         ];

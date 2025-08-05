@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('hostel_id')->constrained()->onDelete('cascade');
             $table->enum('meal_type', ['breakfast', 'lunch', 'snacks', 'dinner']);
             $table->date('meal_date');
-            $table->text('menu_description');
+            $table->text('menu_description')->nullable();
             $table->timestamps();
         });
     }

@@ -10,7 +10,7 @@
         @include('components.breadcrumb-nav', [
             'breadcrumbs' => [
                 ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
-                ['name' => 'Home', 'url' => route('warden.dashboard')],
+               
                 ['name' => 'Add Hostel', 'url' => '']
             ]
         ])
@@ -58,7 +58,8 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Create Hostel</button>
-                <a href="{{ route('warden.hostels.index') }}" class="btn btn-secondary">Cancel</a>
+<a href="{{ route('warden.dashboard') }}" class="btn btn-secondary">Cancel</a>
+
             </form>
         </div>
     </div>

@@ -9,7 +9,7 @@
         <!-- Breadcrumb Navigation -->
         @include('components.breadcrumb-nav', [
             'breadcrumbs' => [
-                ['name' => 'Hostel Dashboard', 'url' => url('/warden/dashboard')],
+                ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
                 ['name' => 'Room Allotment', 'url' => '']
             ]
         ])

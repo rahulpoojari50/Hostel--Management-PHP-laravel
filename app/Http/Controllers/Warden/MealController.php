@@ -16,19 +16,15 @@ class MealController extends Controller
     {
         $warden = Auth::user();
         $hostelIds = Hostel::where('warden_id', $warden->id)->pluck('id');
-        // Filter meals for the current week (Monday to Sunday)
-        $startOfWeek = now()->startOfWeek();
-        $endOfWeek = now()->endOfWeek();
         $meals = Meal::with('hostel')
             ->whereIn('hostel_id', $hostelIds)
-            ->whereBetween('meal_date', [$startOfWeek, $endOfWeek])
             ->orderBy('meal_date')
             ->orderBy('meal_type')
             ->get();
             
         $pageTitle = 'Meals Management';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
             ['name' => 'Meals', 'url' => '']
         ];
         
@@ -92,33 +88,64 @@ class MealController extends Controller
 
     public function update(Request $request, $id)
     {
-        $warden = Auth::user();
-        $hostels = Hostel::where('warden_id', $warden->id)->get();
-        $hostelIds = $hostels->pluck('id')->toArray();
-        $meal = Meal::whereIn('hostel_id', $hostelIds)->findOrFail($id);
-        // Attendance marking
-        if ($request->has('attendance')) {
-            foreach ($request->input('attendance') as $studentId => $status) {
-                $attendance = MealAttendance::firstOrNew([
-                    'student_id' => $studentId,
-                    'meal_id' => $meal->id,
-                ]);
-                $attendance->attendance_status = $status;
-                $attendance->marked_at = now();
-                $attendance->marked_by = $warden->id;
-                $attendance->save();
+        try {
+            $warden = Auth::user();
+            $hostels = Hostel::where('warden_id', $warden->id)->get();
+            $hostelIds = $hostels->pluck('id')->toArray();
+            $meal = Meal::whereIn('hostel_id', $hostelIds)->findOrFail($id);
+            
+            // Log the request data for debugging
+            \Log::info('Meal update request data:', $request->all());
+            \Log::info('Meal ID: ' . $id);
+            \Log::info('Found meal: ' . $meal->toJson());
+            
+            // Check if this is an attendance update (from show page) or meal update (from edit page)
+            $hasAttendanceData = false;
+            foreach ($request->all() as $key => $value) {
+                if (str_starts_with($key, 'attendance[')) {
+                    $hasAttendanceData = true;
+                    break;
+                }
             }
-            return redirect()->route('warden.meals.show', $meal)->with('success', 'Attendance updated.');
+            
+            // Attendance marking (from show page)
+            if ($hasAttendanceData) {
+                foreach ($request->input('attendance', []) as $studentId => $status) {
+                    $attendance = MealAttendance::firstOrNew([
+                        'student_id' => $studentId,
+                        'meal_id' => $meal->id,
+                    ]);
+                    $attendance->attendance_status = $status;
+                    $attendance->marked_at = now();
+                    $attendance->marked_by = $warden->id;
+                    $attendance->save();
+                }
+                return redirect()->route('warden.meals.show', $meal)->with('success', 'Attendance updated.');
+            }
+            
+            // Meal update (from edit page) - always process meal data if we're not handling attendance
+            $validated = $request->validate([
+                'hostel_id' => 'required|in:' . implode(',', $hostelIds),
+                'meal_type' => 'required|in:breakfast,lunch,snacks,dinner',
+                'meal_date' => 'required|date',
+                'menu_description' => 'nullable|string',
+            ]);
+            
+            \Log::info('Validated meal data:', $validated);
+            
+            // Ensure menu_description is not null if it's empty
+            if (empty($validated['menu_description'])) {
+                $validated['menu_description'] = null;
+            }
+            
+            $meal->update($validated);
+            return redirect()->route('warden.meals.index')->with('success', 'Meal updated successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Meal update error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'An error occurred while updating the meal. Please try again.');
         }
-        // Meal update
-        $validated = $request->validate([
-            'hostel_id' => 'required|in:' . implode(',', $hostelIds),
-            'meal_type' => 'required|in:breakfast,lunch,snacks,dinner',
-            'meal_date' => 'required|date',
-            'menu_description' => 'nullable|string',
-        ]);
-        $meal->update($validated);
-        return redirect()->route('warden.meals.index')->with('success', 'Meal updated successfully.');
     }
 
     public function destroy($id)

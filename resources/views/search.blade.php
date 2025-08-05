@@ -9,7 +9,7 @@
         <!-- Breadcrumb Navigation -->
         @include('components.breadcrumb-nav', [
             'breadcrumbs' => [
-                ['name' => 'Home', 'url' => url('/')],
+                ['name' => 'Dashboard', 'url' => url('/')],
                 ['name' => 'Search Results', 'url' => '']
             ]
         ])

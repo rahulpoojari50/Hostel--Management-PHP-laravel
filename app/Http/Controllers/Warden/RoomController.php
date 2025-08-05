@@ -197,7 +197,7 @@ class RoomController extends Controller
         
         $pageTitle = 'Rooms Management';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dasboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Rooms Management', 'url' => '']
         ];
         
@@ -250,7 +250,7 @@ class RoomController extends Controller
         
         $pageTitle = $hostel->name . ' - Rooms';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dasboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Rooms Management', 'url' => route('warden.rooms.index')],
             ['name' => $hostel->name . ' Rooms', 'url' => '']
         ];

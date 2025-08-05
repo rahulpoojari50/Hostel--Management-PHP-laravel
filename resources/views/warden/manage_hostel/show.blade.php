@@ -3,9 +3,46 @@
 @section('title', 'Manage ' . $hostel->name)
 
 @section('content')
+<style>
+    /* Compact meal menu table styling */
+    .meal-menu-table {
+        font-size: 0.9rem;
+    }
+    
+    .meal-menu-table .form-control-sm {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        min-height: 60px;
+    }
+    
+    .meal-menu-table td {
+        padding: 0.5rem;
+        vertical-align: top;
+    }
+    
+    .meal-menu-table th {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .meal-menu-table .table-responsive {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+</style>
+
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Manage {{ $hostel->name }}</h1>
+    <div>
+        <!-- Breadcrumb Navigation -->
+        @include('components.breadcrumb-nav', [
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
+                ['name' => 'Manage Hostels', 'url' => route('warden.manage-hostel.index')],
+                ['name' => $hostel->name, 'url' => '']
+            ]
+        ])
+    </div>
     <div>
         <a href="{{ route('warden.manage-hostel.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Hostels
@@ -19,6 +56,30 @@
         </a>
     </div>
 </div>
+
+<!-- Page Title -->
+<div class="mb-4">
+    <h5 class="mb-0 text-gray-800">Manage {{ $hostel->name }}</h5>
+</div>
+
+<!-- Flash Messages -->
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> {{ session('success') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> {{ session('error') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
 
 <!-- Add Room Type Modal -->
 <div class="modal fade" id="addRoomTypeModal" tabindex="-1" role="dialog" aria-labelledby="addRoomTypeModalLabel" aria-hidden="true">
@@ -140,10 +201,7 @@
   </div>
 </div>
 
-@include('components.breadcrumb', [
-    'pageTitle' => $pageTitle,
-    'breadcrumbs' => $breadcrumbs
-])
+
 
 <!-- Hostel Info Card -->
 <div class="row mb-4">
@@ -387,82 +445,13 @@
 
 
 
-<!-- Update Meals Menu -->
-<div class="row">
-    <div class="col-lg-12 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Update Meals Menu</h6>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('warden.manage-hostel.menu.update', $hostel) }}" method="POST">
-                    @csrf
-                    <div class="form-group">
-                        <label for="menu">Weekly Menu</label>
-                        
-                        <!-- Desktop/Tablet View -->
-                        <div class="d-none d-md-block">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-sm meals-table">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th style="min-width: 80px;">Day</th>
-                                            <th style="min-width: 120px;">Breakfast</th>
-                                            <th style="min-width: 120px;">Lunch</th>
-                                            <th style="min-width: 120px;">Snacks</th>
-                                            <th style="min-width: 120px;">Dinner</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php
-                                            $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-                                            $mealTypes = ['breakfast','lunch','snacks','dinner'];
-                                            $menu = $hostel->menu ?? [];
-                                        @endphp
-                                        @foreach($days as $day)
-                                        <tr>
-                                            <td class="align-middle"><strong>{{ $day }}</strong></td>
-                                            @foreach($mealTypes as $meal)
-                                            <td>
-                                                <input type="text" class="form-control form-control-sm" name="menu[{{ $day }}][{{ $meal }}]" value="{{ $menu[$day][$meal] ?? '' }}" placeholder="-">
-                                            </td>
-                                            @endforeach
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <!-- Mobile View -->
-                        <div class="d-md-none">
-                            @foreach($days as $day)
-                            <div class="card mb-3">
-                                <div class="card-header py-2">
-                                    <h6 class="mb-0 font-weight-bold">{{ $day }}</h6>
-                                </div>
-                                <div class="card-body py-2">
-                                    @foreach($mealTypes as $meal)
-                                    <div class="form-group mb-2">
-                                        <label class="small mb-1">{{ ucfirst($meal) }}</label>
-                                        <input type="text" class="form-control form-control-sm" name="menu[{{ $day }}][{{ $meal }}]" value="{{ $menu[$day][$meal] ?? '' }}" placeholder="-">
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                        
-                        <small class="form-text text-muted">Fill in the menu for each meal and day. Use short descriptions for better fit.</small>
-                    </div>
-                    <button type="submit" class="btn btn-info btn-sm">
-                        <i class="fas fa-utensils fa-sm"></i> Update Menu
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+
+
+
+
+
+
+
 
 <!-- Add Facilities -->
 <div class="row">
@@ -488,6 +477,81 @@
         </div>
     </div>
 </div>
+
+<!-- Simple Meal Menu Management -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Meal Menu Management</h6>
+            </div>
+            <div class="card-body">
+                @php
+                    $mealMenu = $hostel->meal_menu ?? [];
+                    $hasMealMenuData = !empty(array_filter($mealMenu, function($meal) { 
+                        return isset($meal['items']) && !empty($meal['items']); 
+                    }));
+                @endphp
+                
+                <form action="{{ route('warden.manage-hostel.meal-menu.update', $hostel) }}" method="POST" id="simpleMealMenuForm">
+                    @csrf
+                    <div class="table-responsive">
+                        <table class="table table-bordered meal-menu-table" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th class="text-capitalize">breakfast</th>
+                                    <th class="text-capitalize">lunch</th>
+                                    <th class="text-capitalize">snacks</th>
+                                    <th class="text-capitalize">dinner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
+                                    <tr>
+                                        <td class="font-weight-bold">{{ $day }}</td>
+                                        <td>
+                                            <textarea class="form-control form-control-sm" name="meal_menu[{{ strtolower($day) }}][breakfast]" rows="2" 
+                                                      placeholder="Enter breakfast menu...">{{ $mealMenu[strtolower($day)]['breakfast'] ?? '' }}</textarea>
+                                        </td>
+                                        <td>
+                                            <textarea class="form-control form-control-sm" name="meal_menu[{{ strtolower($day) }}][lunch]" rows="2" 
+                                                      placeholder="Enter lunch menu...">{{ $mealMenu[strtolower($day)]['lunch'] ?? '' }}</textarea>
+                                        </td>
+                                        <td>
+                                            <textarea class="form-control form-control-sm" name="meal_menu[{{ strtolower($day) }}][snacks]" rows="2" 
+                                                      placeholder="Enter snacks menu...">{{ $mealMenu[strtolower($day)]['snacks'] ?? '' }}</textarea>
+                                        </td>
+                                        <td>
+                                            <textarea class="form-control form-control-sm" name="meal_menu[{{ strtolower($day) }}][dinner]" rows="2" 
+                                                      placeholder="Enter dinner menu...">{{ $mealMenu[strtolower($day)]['dinner'] ?? '' }}</textarea>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Meal Menu
+                        </button>
+                    </div>
+                </form>
+                
+                @if(!$hasMealMenuData)
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i> No meal menu has been set yet. Fill in the table above and click "Save Meal Menu" to add meal items.
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
 
 <!-- Room Types & Rooms Summary Table -->
 <div class="row">
@@ -805,6 +869,112 @@
                 }
             });
         }
+
+
+
+
+
+
+        }
+
+        // Simple Meal Menu Form handling
+        const simpleMealMenuForm = document.getElementById('simpleMealMenuForm');
+
+        if (simpleMealMenuForm) {
+            console.log('Simple meal menu form found, setting up event listeners');
+
+            // Handle form submission
+            simpleMealMenuForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                const submitBtn = simpleMealMenuForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                const formData = new FormData(simpleMealMenuForm);
+
+                // Send AJAX request
+                fetch(simpleMealMenuForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.success === true) {
+                        // Show success message
+                        showToastNotification('success', data.message || 'Meal menu saved successfully!');
+                        
+                        // Reload the page after a short delay to show updated data
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else if (data && data.success === false) {
+                        // Show error message
+                        showToastNotification('danger', data.message || 'Failed to save meal menu. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToastNotification('danger', 'An error occurred while saving the meal menu.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            });
+
+
+        }
+
+        // Helper function to show toast notifications
+        function showToastNotification(type, message) {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    max-width: 350px;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            // Create toast
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show`;
+            toast.style.cssText = `
+                margin-bottom: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            `;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            `;
+            
+            // Add to container
+            toastContainer.appendChild(toast);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 4000);
+        }
+
     });
 </script>
 @endpush 

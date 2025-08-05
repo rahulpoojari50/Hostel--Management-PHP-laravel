@@ -1,11 +1,15 @@
-<ul class="breadcrumb">
-    @foreach($breadcrumbs ?? [] as $breadcrumb)
-        <li class="breadcrumb-item {{ $loop->last ? 'active' : '' }}">
-            @if (!$loop->last && !empty($breadcrumb['url']))
-                <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['name'] }}</a>
-            @else
-                {{ $breadcrumb['name'] }}
-            @endif
-        </li>
-    @endforeach
-</ul> 
+@if (isset($breadcrumbs) && is_array($breadcrumbs))
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            @foreach ($breadcrumbs as $breadcrumb)
+                @if (!$loop->last)
+                    <li class="breadcrumb-item">
+                        <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['name'] }}</a>
+                    </li>
+                @else
+                    <li class="breadcrumb-item active" aria-current="page">{{ $breadcrumb['name'] }}</li>
+                @endif
+            @endforeach
+        </ol>
+    </nav>
+@endif

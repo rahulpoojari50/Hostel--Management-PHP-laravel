@@ -53,7 +53,13 @@ class MealAttendanceController extends Controller
             ->where('date', $date)
             ->exists();
 
-        return view('warden.meals_attendance', compact('hostels', 'selectedHostel', 'date', 'students', 'attendance', 'attendanceExists', 'editMode'));
+        $breadcrumbs = [
+            ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
+            ['name' => 'Meals Attendance', 'url' => route('warden.meals-attendance.index')],
+            ['name' => $selectedHostel ? $selectedHostel->name : 'Select Hostel', 'url' => '']
+        ];
+        
+        return view('warden.meals_attendance', compact('hostels', 'selectedHostel', 'date', 'students', 'attendance', 'attendanceExists', 'editMode', 'breadcrumbs'));
     }
 
     public function store(Request $request, $hostelId)

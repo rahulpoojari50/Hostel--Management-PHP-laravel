@@ -39,7 +39,7 @@
                                                     {{ $hostel->name }}
                                                 </div>
                                                 <div class="h6 mb-0 font-weight-bold text-gray-800">
-                                                    {{ $hostel->type }} Hostel
+                                                    {{ ucfirst($hostel->type) }} Hostel
                                                 </div>
                                                 <div class="text-muted small">
                                                     {{ $hostel->rooms->count() }} Total Rooms

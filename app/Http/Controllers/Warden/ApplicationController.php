@@ -21,7 +21,7 @@ class ApplicationController extends Controller
             
         $pageTitle = 'Room Applications';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Room Applications', 'url' => '']
         ];
         
@@ -46,7 +46,7 @@ class ApplicationController extends Controller
         }
         $pageTitle = 'Application Details';
         $breadcrumbs = [
-            ['name' => 'Home', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Room Applications', 'url' => route('warden.applications.index')],
             ['name' => 'Application Details', 'url' => '']
         ];
@@ -130,6 +130,7 @@ class ApplicationController extends Controller
                     \App\Models\StudentFee::create([
                         'student_id' => $application->student_id,
                         'hostel_id' => $hostel->id,
+                        'application_id' => $application->id,
                         'fee_type' => $fee['type'],
                         'amount' => $fee['amount'],
                         'status' => 'pending',
@@ -137,8 +138,10 @@ class ApplicationController extends Controller
                 }
             }
             
-            $message = $application->status === 'rejected' ? 'Application reapproved and room assigned successfully!' : 'Application approved and room assigned successfully!';
-            return redirect()->route('warden.applications.index')->with('success', $message);
+            $message = $application->status === 'rejected' 
+                ? 'Application reapproved and room assigned successfully to ' . $application->student->name . ' in Room ' . $room->room_number . '!'
+                : 'Application approved and room assigned successfully to ' . $application->student->name . ' in Room ' . $room->room_number . '!';
+            return redirect()->route('warden.hostels.students', $application->hostel_id)->with('success', $message);
         } elseif ($action === 'reject') {
             // Only allow rejection of pending applications
             if ($application->status !== 'pending') {
@@ -181,7 +184,7 @@ class ApplicationController extends Controller
             $remarks = session('reject_data.remarks', '');
             $pageTitle = 'Confirm Rejection';
             $breadcrumbs = [
-                ['name' => 'Home', 'url' => url('/warden/dashboard')],
+                ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
                 ['name' => 'Room Applications', 'url' => route('warden.applications.index')],
                 ['name' => 'Application Details', 'url' => route('warden.applications.show', $application->id)],
                 ['name' => 'Confirm Rejection', 'url' => '']
@@ -205,7 +208,7 @@ class ApplicationController extends Controller
             ->get(); // No pagination for debugging
         $pageTitle = 'Room Allotment';
         $breadcrumbs = [
-            ['name' => 'Hostel Dashboard', 'url' => url('/warden/dashboard')],
+            ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Room Allotment', 'url' => '']
         ];
         if (request()->ajax()) {
@@ -297,7 +300,6 @@ class ApplicationController extends Controller
         \App\Models\RoomAssignment::create([
             'student_id' => $application->student_id,
             'room_id' => $room->id,
-            'hostel_id' => $room->hostel_id,
             'assigned_date' => now(),
             'status' => 'active',
         ]);
@@ -319,6 +321,7 @@ class ApplicationController extends Controller
                 \App\Models\StudentFee::create([
                     'student_id' => $application->student_id,
                     'hostel_id' => $hostel->id,
+                    'application_id' => $application->id,
                     'fee_type' => $fee['type'],
                     'amount' => $fee['amount'],
                     'status' => 'pending',
@@ -326,8 +329,10 @@ class ApplicationController extends Controller
             }
         }
         
-        $message = $application->status === 'rejected' ? 'Application reapproved and room allotted successfully to ' . $application->student->name : 'Room allotted successfully to ' . $application->student->name;
-        return redirect()->route('rooms.index')
+        $message = $application->status === 'rejected' 
+            ? 'Application reapproved and room allotted successfully to ' . $application->student->name . ' in Room ' . $room->room_number
+            : 'Room allotted successfully to ' . $application->student->name . ' in Room ' . $room->room_number;
+        return redirect()->route('warden.hostels.students', $application->hostel_id)
             ->with('success', $message);
     }
 

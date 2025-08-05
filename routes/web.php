@@ -50,6 +50,7 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::post('/manage-hostel/{hostel}/rent', [HostelController::class, 'updateRent'])->name('manage-hostel.rent.update');
     Route::post('/manage-hostel/{hostel}/fees', [HostelController::class, 'updateFees'])->name('manage-hostel.fees.update');
     Route::post('/manage-hostel/{hostel}/menu', [HostelController::class, 'updateMenu'])->name('manage-hostel.menu.update');
+    Route::post('/manage-hostel/{hostel}/meal-menu', [HostelController::class, 'updateMealMenu'])->name('manage-hostel.meal-menu.update');
     Route::post('/manage-hostel/{hostel}/facilities', [HostelController::class, 'updateFacilities'])->name('manage-hostel.facilities.update');
     Route::delete('/manage-hostel/{hostel}/room-type/{id}', [App\Http\Controllers\Warden\RoomTypeController::class, 'destroy'])->name('warden.hostels.room-types.destroy');
     

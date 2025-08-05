@@ -28,7 +28,7 @@ class StudentController extends Controller
         $pageTitle = 'Edit Student';
         $breadcrumbs = [
             ['name' => 'Home', 'url' => url('/warden/dashboard')],
-            ['name' => 'Students', 'url' => route('warden.hostels.students', $hostel->id ?? 1)],
+            ['Students', 'url' => route('warden.hostels.students', $hostel->id ?? 1)],
             ['name' => 'Edit Student', 'url' => '']
         ];
         

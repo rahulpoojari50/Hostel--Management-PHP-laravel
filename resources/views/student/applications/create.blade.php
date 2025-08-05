@@ -28,7 +28,7 @@
                                 <option value="">-- Select Room Type --</option>
                                 @foreach($hostel->roomTypes as $type)
                                     <option value="{{ $type->id }}" data-price="{{ $type->price_per_month }}" {{ $existingApplication && $existingApplication->room_type_id == $type->id ? 'selected' : '' }}>
-                                        {{ $type->type }} (₹{{ $type->price_per_month }})
+                                        {{ $type->type }}
                                     </option>
                                 @endforeach
                             </select>
