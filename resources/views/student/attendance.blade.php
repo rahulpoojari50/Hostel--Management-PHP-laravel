@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    <h1 class="h3 mb-4 text-gray-800">Attendance History</h1>
+    <h1 class="h3 mb-4 text-gray-800 ">Attendance History</h1>
     
     <!-- Statistics Cards -->
     <div class="row mb-4">

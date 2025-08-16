@@ -54,6 +54,7 @@
         <a href="{{ route('warden.hostels.rooms.bulkCreate', $hostel) }}" class="btn btn-success btn-sm ml-2">
             <i class="fas fa-layer-group"></i> Bulk Add Rooms
         </a>
+
     </div>
 </div>
 
@@ -476,7 +477,7 @@
             </div>
         </div>
     </div>
-</div>
+            </div>
 
 <!-- Simple Meal Menu Management -->
 <div class="row">
@@ -495,18 +496,18 @@
                 
                 <form action="{{ route('warden.manage-hostel.meal-menu.update', $hostel) }}" method="POST" id="simpleMealMenuForm">
                     @csrf
-                    <div class="table-responsive">
+                        <div class="table-responsive">
                         <table class="table table-bordered meal-menu-table" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Day</th>
+                                <thead>
+                                    <tr>
+                                        <th>Day</th>
                                     <th class="text-capitalize">breakfast</th>
                                     <th class="text-capitalize">lunch</th>
                                     <th class="text-capitalize">snacks</th>
                                     <th class="text-capitalize">dinner</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
                                     <tr>
                                         <td class="font-weight-bold">{{ $day }}</td>
@@ -527,23 +528,19 @@
                                                       placeholder="Enter dinner menu...">{{ $mealMenu[strtolower($day)]['dinner'] ?? '' }}</textarea>
                                         </td>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     
                     <div class="mt-3">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Save Meal Menu
-                        </button>
-                    </div>
+                    </button>
+            </div>
                 </form>
                 
-                @if(!$hasMealMenuData)
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle"></i> No meal menu has been set yet. Fill in the table above and click "Save Meal Menu" to add meal items.
-                    </div>
-                @endif
+
             </div>
         </div>
     </div>
@@ -975,6 +972,11 @@
             }, 4000);
         }
 
+
+
     });
 </script>
+
+
+
 @endpush 

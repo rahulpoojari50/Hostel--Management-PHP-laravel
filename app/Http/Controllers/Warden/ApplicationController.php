@@ -19,11 +19,12 @@ class ApplicationController extends Controller
             ->latest()
             ->get();
             
-        $pageTitle = 'Room Applications';
+       
         $breadcrumbs = [
             ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
             ['name' => 'Room Applications', 'url' => '']
         ];
+        $pageTitle = 'Room Applications';
         
         return view('warden.applications.index', compact('applications', 'pageTitle', 'breadcrumbs'));
     }
@@ -47,7 +48,7 @@ class ApplicationController extends Controller
         $pageTitle = 'Application Details';
         $breadcrumbs = [
             ['name' => 'Dashboard', 'url' => url('/warden/dashboard')],
-            ['name' => 'Room Applications', 'url' => route('warden.applications.index')],
+            
             ['name' => 'Application Details', 'url' => '']
         ];
         
@@ -332,7 +333,7 @@ class ApplicationController extends Controller
         $message = $application->status === 'rejected' 
             ? 'Application reapproved and room allotted successfully to ' . $application->student->name . ' in Room ' . $room->room_number
             : 'Room allotted successfully to ' . $application->student->name . ' in Room ' . $room->room_number;
-        return redirect()->route('warden.hostels.students', $application->hostel_id)
+        return redirect()->route('warden.dashboard')
             ->with('success', $message);
     }
 

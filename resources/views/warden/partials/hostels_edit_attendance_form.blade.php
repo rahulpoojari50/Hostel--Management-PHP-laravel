@@ -1,6 +1,6 @@
 <h1 class="h3 mb-4 text-gray-800">Edit Attendance for {{ $hostel->name }}</h1>
 <button type="button" class="btn btn-secondary mb-3" id="backToAttendanceBtn">&larr; Back</button>
-<form method="POST" action="{{ route('warden.warden.hostels.attendance.store', $hostel->id) }}">
+<form method="POST" action="{{ route('warden.hostel-attendance.store', $hostel->id) }}">
     @csrf
     <input type="hidden" name="date" value="{{ $date }}">
     <div class="mb-3">

@@ -4,10 +4,11 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    @include('components.breadcrumb', [
-        'pageTitle' => $pageTitle,
-        'breadcrumbs' => $breadcrumbs
-    ])
+@include('components.breadcrumb-nav', ['breadcrumbs' => $breadcrumbs])
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h5 class="mb-0 text-gray-800">{{ $pageTitle }}</h5>
+</div>
 
     <!-- Application Details Card -->
     <div class="row">

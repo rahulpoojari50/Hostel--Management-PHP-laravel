@@ -13,7 +13,7 @@
         ])
     </div>
     <div>
-        <a href="{{ route('warden.hostels_attendance_hostels') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <a href="{{ route('warden.hostel-attendance.hostels') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back
         </a>
     </div>

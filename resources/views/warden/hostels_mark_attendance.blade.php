@@ -28,7 +28,7 @@
             }, 3000);
         </script>
     @endif
-    <a href="{{ route('warden.hostels.attendance', $hostel->id) }}" class="btn btn-secondary mb-3">&larr; Back</a>
+                <a href="{{ route('warden.hostel-attendance.index', $hostel->id) }}" class="btn btn-secondary mb-3">&larr; Back</a>
     <h1 class="h3 mb-4 text-gray-800">Mark Attendance for {{ $hostel->name }}</h1>
     <div class="mb-2">
         <strong>Legend:</strong>
@@ -37,7 +37,7 @@
         <span class="badge badge-warning">L</span> = On Leave,
         <span class="badge badge-info">H</span> = Holiday
     </div>
-    <form method="POST" action="{{ route('warden.warden.hostels.attendance.store', $hostel->id) }}">
+                <form method="POST" action="{{ route('warden.hostel-attendance.store', $hostel->id) }}">
         @csrf
         <input type="hidden" name="date" value="{{ $date }}">
         @if(!empty($editMode))
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
     dateInput.addEventListener('change', function() {
         const date = this.value;
         const hostelId = {{ $hostel->id }};
-        fetch(`/api/hostels/${hostelId}/attendance-exists?date=${date}`)
+        fetch(`/api/hostel-attendance/${hostelId}/attendance-exists?date=${date}`)
             .then(res => res.json())
             .then(data => {
                 const warning = document.getElementById('attendance-exists-warning');

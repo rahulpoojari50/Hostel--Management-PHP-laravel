@@ -33,7 +33,12 @@ class HostelController extends Controller
     {
         $hostels = Hostel::where('warden_id', Auth::id())->get();
         $pageTitle = 'Hostels Management';
-      
+    
+        $breadcrumbs = [
+            ['name' => 'Dashboard', 'url' => route('warden.dashboard')],
+            ['name' => 'Hostels Management']
+        ];
+    
         return view('warden.hostels', compact('hostels', 'pageTitle', 'breadcrumbs'));
     }
 
@@ -168,7 +173,7 @@ class HostelController extends Controller
     {
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
         $hostel->delete();
-        return redirect()->route('warden.hostels.index')->with('success', 'Hostel deleted successfully.');
+        return redirect()->route('warden.manage-hostel.index')->with('success', 'Hostel deleted successfully.');
     }
 
     /**
@@ -205,8 +210,8 @@ class HostelController extends Controller
                 ]);
             }
             
-            $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
-            $menu = $request->input('menu', []);
+        $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($id);
+        $menu = $request->input('menu', []);
             
             // Debug: Log the raw menu data
             if ($request->has('debug')) {
@@ -246,11 +251,11 @@ class HostelController extends Controller
             // Clean up empty values and ensure proper structure
             $cleanedMenu = [];
             $days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            $mealTypes = ['breakfast','lunch','snacks','dinner'];
+        $mealTypes = ['breakfast','lunch','snacks','dinner'];
             
             foreach ($days as $day) {
                 $cleanedMenu[$day] = [];
-                foreach ($mealTypes as $mealType) {
+            foreach ($mealTypes as $mealType) {
                     $value = trim($menu[$day][$mealType] ?? '');
                     $cleanedMenu[$day][$mealType] = $value;
                 }
@@ -294,7 +299,7 @@ class HostelController extends Controller
             // Debug logging after save
             if ($request->has('debug')) {
                 \Log::info('Menu saved successfully', [
-                    'hostel_id' => $hostel->id,
+                            'hostel_id' => $hostel->id,
                     'saved_menu' => $hostel->menu,
                     'cleaned_menu' => $cleanedMenu
                 ]);
@@ -715,7 +720,7 @@ class HostelController extends Controller
             }
         }
         if ($editMode) {
-            return redirect()->route('warden.hostels.attendance', [$hostel->id, 'date' => $validated['date']])
+            return redirect()->route('warden.hostel-attendance.index', [$hostel->id, 'date' => $validated['date']])
                 ->with('success', 'Hostel attendance updated!');
         }
         return redirect()->back()->with('success', 'Hostel attendance saved!');
@@ -899,89 +904,52 @@ class HostelController extends Controller
         
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
         
-        // Check if this is the final confirmation step
-        if (request()->has('final_confirmation') && request('final_confirmation') === 'true') {
-            $validated = $request->validate([
-                'room_ids' => 'required|array',
-                'room_ids.*' => 'required|integer|exists:rooms,id'
-            ]);
-            
-            \Log::info('Validation passed', ['validated' => $validated]);
-            
-            $deletedCount = 0;
-            $roomsWithOccupants = [];
-            
-            foreach ($validated['room_ids'] as $roomId) {
-                $room = $hostel->rooms()->find($roomId);
-                
-                if ($room) {
-                    // Check if room has occupants
-                    $occupants = $room->roomAssignments()->where('status', 'active')->count();
-                    
-                    \Log::info('Processing room', [
-                        'room_id' => $roomId,
-                        'room_number' => $room->room_number,
-                        'occupants' => $occupants
-                    ]);
-                    
-                    if ($occupants > 0) {
-                        $roomsWithOccupants[] = "Room {$room->room_number} (has {$occupants} occupant(s))";
-                    } else {
-                        $room->delete();
-                        $deletedCount++;
-                        \Log::info('Room deleted', ['room_id' => $roomId]);
-                    }
-                }
-            }
-            
-            $message = "Successfully deleted {$deletedCount} room(s).";
-            
-            if (!empty($roomsWithOccupants)) {
-                $message .= " Could not delete the following rooms as they have occupants: " . implode(', ', $roomsWithOccupants);
-            }
-            
-            \Log::info('Bulk delete completed', [
-                'deleted_count' => $deletedCount,
-                'rooms_with_occupants' => $roomsWithOccupants,
-                'message' => $message
-            ]);
-            
-            return redirect()->back()->with('success', $message);
-        }
-        
-        // Check if this is the third confirmation step
-        if (request()->has('third_confirmation') && request('third_confirmation') === 'true') {
-            $validated = $request->validate([
-                'room_ids' => 'required|array',
-                'room_ids.*' => 'required|integer|exists:rooms,id'
-            ]);
-            
-            $rooms = $hostel->rooms()->whereIn('id', $validated['room_ids'])->with('roomType')->get();
-            $step = 3;
-            return view('warden.rooms.confirm_bulk_delete', compact('hostel', 'rooms', 'step'));
-        }
-        
-        // Check if this is the second confirmation step
-        if (request()->has('second_confirmation') && request('second_confirmation') === 'true') {
-            $validated = $request->validate([
-                'room_ids' => 'required|array',
-                'room_ids.*' => 'required|integer|exists:rooms,id'
-            ]);
-            
-            $rooms = $hostel->rooms()->whereIn('id', $validated['room_ids'])->with('roomType')->get();
-            $step = 2;
-            return view('warden.rooms.confirm_bulk_delete', compact('hostel', 'rooms', 'step'));
-        }
-        
-        // First confirmation step
         $validated = $request->validate([
             'room_ids' => 'required|array',
             'room_ids.*' => 'required|integer|exists:rooms,id'
         ]);
         
-        $rooms = $hostel->rooms()->whereIn('id', $validated['room_ids'])->with('roomType')->get();
-        $step = 1;
-        return view('warden.rooms.confirm_bulk_delete', compact('hostel', 'rooms', 'step'));
+        \Log::info('Validation passed', ['validated' => $validated]);
+        
+        $deletedCount = 0;
+        $roomsWithOccupants = [];
+        
+        foreach ($validated['room_ids'] as $roomId) {
+            $room = $hostel->rooms()->find($roomId);
+            
+            if ($room) {
+                // Check if room has occupants
+                $occupants = $room->roomAssignments()->where('status', 'active')->count();
+                
+                \Log::info('Processing room', [
+                    'room_id' => $roomId,
+                    'room_number' => $room->room_number,
+                    'occupants' => $occupants
+                ]);
+                
+                if ($occupants > 0) {
+                    $roomsWithOccupants[] = "Room {$room->room_number} (has {$occupants} occupant(s))";
+                } else {
+                    $room->delete();
+                    $deletedCount++;
+                    \Log::info('Room deleted', ['room_id' => $roomId]);
+                }
+            }
+        }
+        
+        $message = "Successfully deleted {$deletedCount} room(s).";
+        
+        if (!empty($roomsWithOccupants)) {
+            $message .= " Could not delete the following rooms as they have occupants: " . implode(', ', $roomsWithOccupants);
+        }
+        
+        \Log::info('Bulk delete completed', [
+            'deleted_count' => $deletedCount,
+            'rooms_with_occupants' => $roomsWithOccupants,
+            'message' => $message
+        ]);
+        
+        return redirect()->back()->with('success', $message);
     }
 
     /**
@@ -1244,10 +1212,10 @@ class HostelController extends Controller
 
         // Check if this is the confirmation step
         if ($request->input('confirmed') === 'true') {
-            // Delete RoomApplications and Users
-            \App\Models\RoomApplication::where('hostel_id', $hostel->id)->whereIn('student_id', $studentIds)->delete();
-            \App\Models\User::whereIn('id', $studentIds)->delete();
-            return redirect()->back()->with('success', 'Selected students deleted successfully.');
+        // Delete RoomApplications and Users
+        \App\Models\RoomApplication::where('hostel_id', $hostel->id)->whereIn('student_id', $studentIds)->delete();
+        \App\Models\User::whereIn('id', $studentIds)->delete();
+        return redirect()->back()->with('success', 'Selected students deleted successfully.');
         } else {
             // First step - show confirmation
             $students = \App\Models\User::whereIn('id', $studentIds)->get();
@@ -1264,36 +1232,40 @@ class HostelController extends Controller
     {
         $hostel = \App\Models\Hostel::where('warden_id', \Auth::id())->findOrFail($id);
         
-        // Collect all fees from the form
-        $fees = [];
+        // Get existing fees from the hostel
+        $existingFees = $hostel->fees ?? [];
+        $newFees = [];
         $createdFees = 0;
-        $existingFees = 0;
+        $duplicateFees = 0;
         
-        // Default fees
+        // Collect new fees from the form
         if ($request->has('fees')) {
-            foreach ($request->input('fees') as $type => $amount) {
-                if ($amount !== null && $amount !== '' && is_numeric($amount)) {
-                    $fees[] = [
-                        'type' => $type,
-                        'amount' => floatval($amount),
-                    ];
-                }
-            }
-        }
-        // Optional fees
-        if ($request->has('optional_fees')) {
-            foreach ($request->input('optional_fees') as $fee) {
+            foreach ($request->input('fees') as $fee) {
                 if (!empty($fee['type']) && isset($fee['amount']) && $fee['amount'] !== '' && is_numeric($fee['amount'])) {
-                    $fees[] = [
-                        'type' => $fee['type'],
-                        'amount' => floatval($fee['amount']),
-                    ];
+                    $feeType = trim($fee['type']);
+                    $feeAmount = floatval($fee['amount']);
+                    
+                    // Check if this fee type already exists
+                    $feeExists = collect($existingFees)->contains('type', $feeType);
+                    
+                    if (!$feeExists) {
+                        $newFees[] = [
+                            'type' => $feeType,
+                            'amount' => $feeAmount,
+                        ];
+                        $createdFees++;
+                    } else {
+                        $duplicateFees++;
+                    }
                 }
             }
         }
+        
+        // Merge existing fees with new fees
+        $allFees = array_merge($existingFees, $newFees);
         
         // Update hostel fees
-        $hostel->fees = $fees;
+        $hostel->fees = $allFees;
         $hostel->save();
         
         // Get all students currently in this hostel (with active room assignments)
@@ -1304,50 +1276,135 @@ class HostelController extends Controller
               });
         })->get();
         
-        // Create pending fee records for all students
+        // Create pending fee records for all students (only for new fees)
         foreach ($students as $student) {
-            foreach ($fees as $fee) {
-                // Check if this fee type already exists for this student
-                $existingFee = \App\Models\StudentFee::where('student_id', $student->id)
-                    ->where('hostel_id', $hostel->id)
-                    ->where('fee_type', $fee['type'])
-                    ->first();
-                
-                // Only create if it doesn't exist
-                if (!$existingFee) {
-                    try {
-                        \App\Models\StudentFee::create([
-                            'student_id' => $student->id,
-                            'hostel_id' => $hostel->id,
-                            'fee_type' => $fee['type'],
-                            'amount' => $fee['amount'],
-                            'status' => 'pending',
-                        ]);
-                        $createdFees++;
-                    } catch (\Exception $e) {
-                        \Log::error("Failed to create fee for student {$student->id}: " . $e->getMessage());
-                    }
-                } else {
-                    $existingFees++;
+            foreach ($newFees as $fee) {
+                try {
+                    \App\Models\StudentFee::create([
+                        'student_id' => $student->id,
+                        'hostel_id' => $hostel->id,
+                        'fee_type' => $fee['type'],
+                        'amount' => $fee['amount'],
+                        'status' => 'pending',
+                    ]);
+                    $createdFees++;
+                } catch (\Exception $e) {
+                    \Log::error("Failed to create fee for student {$student->id}: " . $e->getMessage());
                 }
             }
         }
         
         $studentCount = $students->count();
-        $feeCount = count($fees);
+        $totalFees = count($allFees);
         
         $message = "Fees updated successfully. ";
         if ($createdFees > 0) {
-            $message .= "Created {$createdFees} new pending fee(s) for {$studentCount} student(s). ";
+            $message .= "Added {$createdFees} new fee(s) to the hostel. ";
         }
-        if ($existingFees > 0) {
-            $message .= "{$existingFees} fee(s) already existed. ";
+        if ($duplicateFees > 0) {
+            $message .= "Skipped {$duplicateFees} duplicate fee(s). ";
         }
-        if ($createdFees === 0 && $existingFees === 0) {
-            $message .= "No new fees were created (all fees already exist).";
+        if ($createdFees === 0) {
+            $message .= "No new fees were added (all fee types already exist).";
         }
+        $message .= "Total fees in hostel: {$totalFees}.";
         
         return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * Update a specific fee for a hostel
+     */
+    public function updateIndividualFee(Request $request, $id)
+    {
+        $hostel = \App\Models\Hostel::where('warden_id', \Auth::id())->findOrFail($id);
+        
+        $validated = $request->validate([
+            'fee_index' => 'required|integer|min:0',
+            'fee_type' => 'required|string|max:255',
+            'fee_amount' => 'required|numeric|min:0',
+        ]);
+        
+        // Get current fees
+        $fees = $hostel->fees ?? [];
+        
+        // Check if fee index exists
+        if (!isset($fees[$validated['fee_index']])) {
+            return redirect()->back()->with('error', 'Fee not found.');
+        }
+        
+        // Update the specific fee
+        $fees[$validated['fee_index']] = [
+            'type' => trim($validated['fee_type']),
+            'amount' => floatval($validated['fee_amount']),
+        ];
+        
+        // Save updated fees
+        $hostel->fees = $fees;
+        $hostel->save();
+        
+        // Update existing student fee records for this fee type
+        $oldFeeType = $fees[$validated['fee_index']]['type'] ?? '';
+        
+        // If fee type name changed, update all student fee records with the old name
+        if ($oldFeeType !== $validated['fee_type']) {
+            $updatedCount = \App\Models\StudentFee::where('hostel_id', $hostel->id)
+                ->where('fee_type', $oldFeeType)
+                ->update([
+                    'fee_type' => $validated['fee_type'],
+                    'amount' => $validated['fee_amount']
+                ]);
+        } else {
+            // Only amount changed, update amount for existing fee type
+            $updatedCount = \App\Models\StudentFee::where('hostel_id', $hostel->id)
+                ->where('fee_type', $validated['fee_type'])
+                ->update([
+                    'amount' => $validated['fee_amount']
+                ]);
+        }
+        
+        return redirect()->back()->with('success', "Fee updated successfully. {$updatedCount} student fee records updated.");
+    }
+
+    /**
+     * Delete a specific fee for a hostel
+     */
+    public function deleteIndividualFee(Request $request, $id)
+    {
+        $hostel = \App\Models\Hostel::where('warden_id', \Auth::id())->findOrFail($id);
+        
+        $validated = $request->validate([
+            'fee_index' => 'required|integer|min:0',
+        ]);
+        
+        // Get current fees
+        $fees = $hostel->fees ?? [];
+        
+        // Check if fee index exists
+        if (!isset($fees[$validated['fee_index']])) {
+            return redirect()->back()->with('error', 'Fee not found.');
+        }
+        
+        // Get the fee type to delete from student records
+        $feeToDelete = $fees[$validated['fee_index']];
+        $feeType = $feeToDelete['type'] ?? '';
+        
+        // Remove the fee from the array
+        unset($fees[$validated['fee_index']]);
+        
+        // Reindex the array to maintain sequential keys
+        $fees = array_values($fees);
+        
+        // Save updated fees
+        $hostel->fees = $fees;
+        $hostel->save();
+        
+        // Delete associated student fee records for this fee type
+        $deletedCount = \App\Models\StudentFee::where('hostel_id', $hostel->id)
+            ->where('fee_type', $feeType)
+            ->delete();
+        
+        return redirect()->back()->with('success', "Fee deleted successfully. {$deletedCount} student fee records also deleted.");
     }
 
     /**

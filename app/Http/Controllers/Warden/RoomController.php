@@ -69,33 +69,14 @@ class RoomController extends Controller
         $hostel = Hostel::where('warden_id', Auth::id())->findOrFail($hostelId);
         $room = $hostel->rooms()->findOrFail($id);
         
-        // Check if this is the final confirmation step
-        if (request()->has('final_confirmation') && request('final_confirmation') === 'true') {
-            // Check if room has occupants
-            $occupants = $room->roomAssignments()->where('status', 'active')->count();
-            if ($occupants > 0) {
-                return redirect()->back()->with('error', 'Cannot delete room ' . $room->room_number . ' as it has ' . $occupants . ' occupant(s).');
-            }
-            
-            $room->delete();
-            return redirect()->route('warden.manage-hostel.show', $hostelId)->with('success', 'Room ' . $room->room_number . ' deleted successfully.');
+        // Check if room has occupants
+        $occupants = $room->roomAssignments()->where('status', 'active')->count();
+        if ($occupants > 0) {
+            return redirect()->back()->with('error', 'Cannot delete room ' . $room->room_number . ' as it has ' . $occupants . ' occupant(s).');
         }
         
-        // Check if this is the third confirmation step
-        if (request()->has('third_confirmation') && request('third_confirmation') === 'true') {
-            $step = 3;
-            return view('warden.rooms.confirm_delete', compact('hostel', 'room', 'step'));
-        }
-        
-        // Check if this is the second confirmation step
-        if (request()->has('second_confirmation') && request('second_confirmation') === 'true') {
-            $step = 2;
-            return view('warden.rooms.confirm_delete', compact('hostel', 'room', 'step'));
-        }
-        
-        // First confirmation step
-        $step = 1;
-        return view('warden.rooms.confirm_delete', compact('hostel', 'room', 'step'));
+        $room->delete();
+        return redirect()->route('warden.manage-hostel.show', $hostelId)->with('success', 'Room ' . $room->room_number . ' deleted successfully.');
     }
 
 

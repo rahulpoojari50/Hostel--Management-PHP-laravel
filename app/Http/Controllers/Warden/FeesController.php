@@ -35,6 +35,20 @@ class FeesController extends Controller
         return view('warden.fees.index', compact('hostel', 'pageTitle', 'breadcrumbs'));
     }
 
+    public function getHostelFees($hostelId)
+    {
+        $hostel = Hostel::where('warden_id', auth()->id())->findOrFail($hostelId);
+        
+        return response()->json([
+            'success' => true,
+            'hostel' => [
+                'id' => $hostel->id,
+                'name' => $hostel->name
+            ],
+            'fees' => $hostel->fees ?? []
+        ]);
+    }
+
     public function createMissingFees($hostelId)
     {
         $hostel = Hostel::where('warden_id', auth()->id())->findOrFail($hostelId);

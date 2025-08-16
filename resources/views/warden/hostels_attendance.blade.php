@@ -2,6 +2,8 @@
 
 @section('title', 'Hostel Attendance')
 
+
+
 @section('content')
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -55,82 +57,84 @@
       </div>
     </div>
 
-    @if(request('date'))
-        @if((request('edit') || request('action') == 'take') && isset($attendanceExists) && $attendanceExists)
-            <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; min-width: 300px; z-index: 9999;">
-                <div class="toast show" id="attendance-exists-toast" data-delay="3000" style="background: #fff3cd; border-color: #ffeeba;">
-                    <div class="toast-header" style="background: #fff3cd; border-bottom: 1px solid #ffeeba;">
-                        <strong class="mr-auto text-warning">Notice</strong>
-                        <small>Now</small>
-                        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onclick="document.getElementById('attendance-exists-toast').style.display='none';">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="toast-body text-dark">
-                        Attendance already taken for this date.
-                    </div>
+    @if((request('edit') || request('action') == 'take') && isset($attendanceExists) && $attendanceExists)
+        <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; min-width: 300px; z-index: 9999;">
+            <div class="toast show" id="attendance-exists-toast" data-delay="3000" style="background: #fff3cd; border-color: #ffeeba;">
+                <div class="toast-header" style="background: #fff3cd; border-bottom: 1px solid #ffeeba;">
+                    <strong class="mr-auto text-warning">Notice</strong>
+                    <small>Now</small>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onclick="document.getElementById('attendance-exists-toast').style.display='none';">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-            </div>
-            <script>
-                setTimeout(function() {
-                    var toast = document.getElementById('attendance-exists-toast');
-                    if (toast) toast.style.display = 'none';
-                }, 3000);
-            </script>
-        @endif
-        @if(isset($students) && count($students))
-        <div class="card shadow mb-4">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Student Name</th>
-                                <th>USN</th>
-                                <th>Status</th>
-                                <th>Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($students as $student)
-                            @php
-                                $record = $records[$student->id][$date][0] ?? null;
-                                $status = $record->status ?? null;
-                                $remarks = $record->remarks ?? '';
-                            @endphp
-                                                            <tr>
-                                    <td>
-                                        <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
-                                            <i class="fas fa-user mr-1"></i>{{ $student->name }}
-                                        </a>
-                                    </td>
-                                <td>{{ $student->usn ?? '-' }}</td>
-                                <td>
-                                    @if($status === 'Taken')
-                                        <span class="badge badge-success">P</span>
-                                    @elseif($status === 'Skipped')
-                                        <span class="badge badge-danger">A</span>
-                                    @elseif($status === 'On Leave')
-                                        <span class="badge badge-warning">L</span>
-                                    @elseif($status === 'Holiday')
-                                        <span class="badge badge-info">H</span>
-                                    @else
-                                        <span class="badge badge-secondary">-</span>
-                                    @endif
-                                </td>
-                                <td>{{ $remarks }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div class="toast-body text-dark">
+                    Attendance already taken for this date.
                 </div>
             </div>
         </div>
-        @else
-            <div class="alert alert-info mt-4">No students found for this hostel.</div>
-        @endif
+        <script>
+            setTimeout(function() {
+                var toast = document.getElementById('attendance-exists-toast');
+                if (toast) toast.style.display = 'none';
+            }, 3000);
+        </script>
+    @endif
+    
+    @if(isset($students) && count($students))
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Student Name</th>
+                            <th>USN</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($students as $student)
+                        @php
+                            $record = $records[$student->id][$date][0] ?? null;
+                            $status = $record->status ?? null;
+                            $remarks = $record->remarks ?? '';
+                        @endphp
+                        <tr>
+                            <td>
+                                <a href="#" class="student-name-clickable text-primary" data-student-id="{{ $student->id }}" style="text-decoration: none; cursor: pointer;">
+                                    <i class="fas fa-user mr-1"></i>{{ $student->name }}
+                                </a>
+                            </td>
+                            <td>{{ $student->usn ?? '-' }}</td>
+                            <td>
+                                @if($status === 'Taken')
+                                    <span class="badge badge-success">P</span>
+                                @elseif($status === 'Skipped')
+                                    <span class="badge badge-danger">A</span>
+                                @elseif($status === 'On Leave')
+                                    <span class="badge badge-warning">L</span>
+                                @elseif($status === 'Holiday')
+                                    <span class="badge badge-info">H</span>
+                                @else
+                                    <span class="badge badge-secondary">-</span>
+                                @endif
+                            </td>
+                            <td>{{ $remarks }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @else
+        <div class="alert alert-info mt-4">No students found for this hostel.</div>
     @endif
 </div>
+
+@include('components.student-profile-modal')
+
 <script>
 // Helper to format date as yyyy-mm-dd
 function formatDate(date) {
@@ -203,12 +207,12 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('attendanceForm').submit();
         } else if (modalAction === 'take') {
             // Redirect to take attendance page for selected date
-            var takeUrl = "{{ route('warden.hostels.attendance.mark', [$hostel->id]) }}";
+            var takeUrl = "{{ route('warden.hostel-attendance.mark', [$hostel->id]) }}";
             takeUrl += '?date=' + encodeURIComponent(modalDate);
             window.location.href = takeUrl;
         } else if (modalAction === 'edit') {
             // Redirect to edit attendance page for selected date
-            var editUrl = "{{ route('warden.hostels.attendance.mark', [$hostel->id]) }}";
+            var editUrl = "{{ route('warden.hostel-attendance.mark', [$hostel->id]) }}";
             editUrl += '?date=' + encodeURIComponent(modalDate) + '&edit=1';
             window.location.href = editUrl;
         }

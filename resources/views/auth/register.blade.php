@@ -19,7 +19,7 @@
 
             <!-- USN -->
             <div class="mt-4">
-                <x-input-label for="usn" :value="__('USN (University Serial Number)')" />
+                <x-input-label for="usn" :value="__('USN/Staff ID')" />
                 <x-text-input id="usn" class="block mt-1 w-full" type="text" name="usn" :value="old('usn')" required />
                 <x-input-error :messages="$errors->get('usn')" class="mt-2" />
             </div>

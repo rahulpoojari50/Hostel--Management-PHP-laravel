@@ -16,7 +16,7 @@
                         <h5 class="card-title">{{ $hostel->name }}</h5>
                         <p class="card-text">{{ $hostel->address }}</p>
                     </div>
-                    <a href="{{ route('warden.hostels.attendance', $hostel->id) }}" class="btn btn-primary mt-3">Take Attendance</a>
+                    <a href="{{ route('warden.hostel-attendance.index', $hostel->id) }}" class="btn btn-primary mt-3">Take Attendance</a>
                 </div>
             </div>
         </div>

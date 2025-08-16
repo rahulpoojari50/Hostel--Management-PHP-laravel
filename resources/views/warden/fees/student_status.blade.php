@@ -16,7 +16,8 @@
 
 <!-- Page Title -->
 <div class="mb-4">
-    <h5 class="mb-0 text-gray-800">Student Fee Status</h5>
+<h5 class="mb-0 text-gray-800">Student Fee Status</h5>
+
 </div>
 
 <!-- Student Search Filters -->

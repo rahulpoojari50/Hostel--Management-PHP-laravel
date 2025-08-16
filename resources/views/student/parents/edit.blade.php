@@ -3,13 +3,10 @@
 @section('title', 'Add Parent Details')
 
 @section('content')
-@include('components.breadcrumb', [
-    'pageTitle' => 'Add Parent Details',
-    'breadcrumbs' => [
-        ['name' => 'Home', 'url' => url('/')],
-        ['name' => 'Parent Details', 'url' => route('student.parents.edit')],
-    ]
-])
+
+   
+   
+ 
 <div class="row justify-content-center">
     <div class="col-lg-6 mb-4">
         <div class="card shadow">

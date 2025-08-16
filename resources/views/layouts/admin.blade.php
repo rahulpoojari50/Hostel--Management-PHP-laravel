@@ -138,7 +138,7 @@
                 </li>
                 <!-- Attendance Parent Menu -->
                 @php
-                    $attendanceActive = request()->routeIs('warden.hostels_attendance_hostels') || request()->routeIs('warden.meals-attendance.*');
+                    $attendanceActive = request()->routeIs('warden.hostel-attendance.*') || request()->routeIs('warden.meals-attendance.*');
                 @endphp
                 <li class="nav-item has-sub">
                     <a href="#attendanceSubmenu" class="nav-link" data-toggle="collapse" role="button" aria-expanded="{{ $attendanceActive ? 'true' : 'false' }}" aria-controls="attendanceSubmenu">
@@ -146,8 +146,8 @@
                         <span>Attendance</span>
                     </a>
                     <ul class="submenu collapse{{ $attendanceActive ? ' show' : '' }}" id="attendanceSubmenu">
-                        <li class="nav-item {{ request()->routeIs('warden.hostels_attendance_hostels') ? 'active' : '' }}">
-                            <a href="{{ route('warden.hostels_attendance_hostels') }}" class="nav-link">Hostel Attendance</a>
+                        <li class="nav-item {{ request()->routeIs('warden.hostel-attendance.hostels') ? 'active' : '' }}">
+                            <a href="{{ route('warden.hostel-attendance.hostels') }}" class="nav-link">Hostel Attendance</a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('warden.attendance.report') }}" class="nav-link">Attendance Report</a>

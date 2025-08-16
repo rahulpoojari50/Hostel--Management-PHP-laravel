@@ -4,20 +4,6 @@
 
 @section('content')
 <!-- Page Heading -->
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-        <!-- Breadcrumb Navigation -->
-        @include('components.breadcrumb-nav', [
-            'breadcrumbs' => [
-                ['name' => 'Home', 'url' => url('/')],
-                ['name' => 'Student Dashboard', 'url' => '']
-            ]
-        ])
-    </div>
-    <div>
-        {{-- <h1 class="h3 mb-0 text-gray-800">Student Dashboard</h1> --}}
-    </div>
-</div>
 
 <!-- Page Title -->
 <div class="mb-4">
@@ -67,7 +53,7 @@
                         <div class="col-6 col-md-4"><strong>Floor:</strong> {{ $assignment->room->floor }}</div>
                         <div class="col-6 col-md-4">
                             <strong>Status:</strong>
-                            <span class="badge badge-secondary text-capitalize">{{ $assignment->room->status }}</span>
+                            <span class="badge badge-secondary text-capitalize">Allocated</span>
                         </div>
                         <div class="col-6 col-md-4"><strong>Assigned:</strong> {{ $assignment->assigned_date }}</div>
                     </div>

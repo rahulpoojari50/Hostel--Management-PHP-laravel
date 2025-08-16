@@ -58,7 +58,7 @@
                     <div class="table-responsive mb-3">
                         <table class="table table-bordered mb-0">
                             <thead class="thead-light">
-                                <tr><th>Type</th><th>Rooms</th><th>Available</th><th>Occupied</th></tr>
+                                <tr><th>Type</th><th>Rooms</th><th>Available</th><th>Allocated</th></tr>
                             </thead>
                             <tbody>
                                 @foreach($hostel->roomTypes as $type)

@@ -48,7 +48,9 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::post('/manage-hostel/{hostel}/add-rooms', [HostelController::class, 'addRooms'])->name('manage-hostel.add-rooms');
     Route::post('/manage-hostel/{hostel}/store-rooms-details', [HostelController::class, 'storeRoomsWithDetails'])->name('manage-hostel.store-rooms-details');
     Route::post('/manage-hostel/{hostel}/rent', [HostelController::class, 'updateRent'])->name('manage-hostel.rent.update');
-    Route::post('/manage-hostel/{hostel}/fees', [HostelController::class, 'updateFees'])->name('manage-hostel.fees.update');
+            Route::post('/manage-hostel/{hostel}/fees', [HostelController::class, 'updateFees'])->name('manage-hostel.fees.update');
+        Route::put('/manage-hostel/{hostel}/fees/individual', [HostelController::class, 'updateIndividualFee'])->name('manage-hostel.fees.individual.update');
+        Route::delete('/manage-hostel/{hostel}/fees/individual', [HostelController::class, 'deleteIndividualFee'])->name('manage-hostel.fees.individual.delete');
     Route::post('/manage-hostel/{hostel}/menu', [HostelController::class, 'updateMenu'])->name('manage-hostel.menu.update');
     Route::post('/manage-hostel/{hostel}/meal-menu', [HostelController::class, 'updateMealMenu'])->name('manage-hostel.meal-menu.update');
     Route::post('/manage-hostel/{hostel}/facilities', [HostelController::class, 'updateFacilities'])->name('manage-hostel.facilities.update');
@@ -77,10 +79,10 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('/applications/{id}/reject-confirmation', [ApplicationController::class, 'rejectConfirmation'])->name('applications.reject-confirmation');
     Route::resource('meals', MealController::class);
     Route::get('hostels/{hostel}/students', [HostelController::class, 'students'])->name('hostels.students');
-    Route::get('hostels/{hostel}/attendance', [HostelController::class, 'attendance'])->name('hostels.attendance');
-    Route::get('hostels/{hostel}/attendance/mark', [HostelController::class, 'markAttendance'])->name('hostels.attendance.mark');
-    Route::post('warden/hostels/{hostel}/attendance/mark', [HostelController::class, 'storeAttendance'])->name('warden.hostels.attendance.store');
-    Route::get('warden/hostels/{hostel}/attendance/edit-form', [App\Http\Controllers\Warden\HostelController::class, 'ajaxEditAttendanceForm'])->name('warden.hostels.attendance.edit-form');
+    Route::get('hostel-attendance/{hostel}', [HostelController::class, 'attendance'])->name('hostel-attendance.index');
+    Route::get('hostel-attendance/{hostel}/mark', [HostelController::class, 'markAttendance'])->name('hostel-attendance.mark');
+    Route::post('hostel-attendance/{hostel}/store', [HostelController::class, 'storeAttendance'])->name('hostel-attendance.store');
+    Route::get('hostel-attendance/{hostel}/edit-form', [App\Http\Controllers\Warden\HostelController::class, 'ajaxEditAttendanceForm'])->name('hostel-attendance.edit-form');
 
     Route::get('hostels/{hostel}/rooms/bulk-create', [RoomController::class, 'bulkCreate'])->name('hostels.rooms.bulkCreate');
     Route::post('hostels/rooms/bulk-store', [RoomController::class, 'bulkStore'])->name('rooms.bulkStore');
@@ -121,9 +123,9 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('/meals-attendance/{hostel?}', [App\Http\Controllers\Warden\MealAttendanceController::class, 'index'])->name('meals-attendance.index');
     Route::post('/meals-attendance/{hostel}', [App\Http\Controllers\Warden\MealAttendanceController::class, 'store'])->name('meals-attendance.store');
     Route::get('/meals-attendance/{hostel}/download-csv', [App\Http\Controllers\Warden\MealAttendanceController::class, 'downloadCsv'])->name('meals-attendance.download-csv');
-    Route::get('hostels-attendance', [App\Http\Controllers\Warden\HostelController::class, 'attendanceHostels'])->name('hostels_attendance_hostels');
-    Route::get('/hostels/{hostel}/attendance/download-csv', [App\Http\Controllers\Warden\HostelController::class, 'downloadAttendanceCsv'])->name('hostels.attendance.download-csv');
-    Route::get('/hostels/{hostel}/attendance/export-summary', [App\Http\Controllers\Warden\HostelController::class, 'downloadAttendanceSummaryExcel'])->name('hostels.attendance.export-summary');
+    Route::get('hostel-attendance', [App\Http\Controllers\Warden\HostelController::class, 'attendanceHostels'])->name('hostel-attendance.hostels');
+    Route::get('/hostel-attendance/{hostel}/download-csv', [App\Http\Controllers\Warden\HostelController::class, 'downloadAttendanceCsv'])->name('hostel-attendance.download-csv');
+    Route::get('/hostel-attendance/{hostel}/export-summary', [App\Http\Controllers\Warden\HostelController::class, 'downloadAttendanceSummaryExcel'])->name('hostel-attendance.export-summary');
     Route::get('/meals-attendance/{hostel}/export-summary', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'downloadMealsAttendanceSummaryExcel'])->name('meals-attendance.export-summary');
     Route::get('/warden/attendance-report', [AttendanceController::class, 'report'])->name('attendance.report');
     Route::get('/meals-attendance/{hostel}/attendance/download-csv', [App\Http\Controllers\Warden\MealsAttendanceController::class, 'downloadAttendanceCsv'])->name('warden.meals-attendance.download-csv');
@@ -136,8 +138,9 @@ Route::middleware(['auth', 'warden'])->prefix('warden')->name('warden.')->group(
     Route::get('students/{student}/edit', [\App\Http\Controllers\Warden\StudentController::class, 'edit'])->name('students.edit');
     Route::get('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'show'])->name('students.show');
     Route::put('students/{student}', [\App\Http\Controllers\Warden\StudentController::class, 'update'])->name('students.update');
-    Route::get('/fees', [App\Http\Controllers\Warden\FeesController::class, 'index'])->name('fees.index');
-    Route::get('/fees/create-missing/{hostel}', [App\Http\Controllers\Warden\FeesController::class, 'createMissingFees'])->name('fees.create-missing');
+            Route::get('/fees', [App\Http\Controllers\Warden\FeesController::class, 'index'])->name('fees.index');
+        Route::get('/fees/get-hostel-fees/{hostel}', [App\Http\Controllers\Warden\FeesController::class, 'getHostelFees'])->name('fees.get-hostel-fees');
+        Route::get('/fees/create-missing/{hostel}', [App\Http\Controllers\Warden\FeesController::class, 'createMissingFees'])->name('fees.create-missing');
     Route::get('/fees/student-status', [App\Http\Controllers\Warden\FeesController::class, 'studentStatus'])->name('fees.student_status');
     Route::get('/fees/student-status/export/csv', [App\Http\Controllers\Warden\FeesController::class, 'exportCsv'])->name('fees.student_status.export.csv');
     Route::get('/fees/student-status/export/pdf', [App\Http\Controllers\Warden\FeesController::class, 'exportPdf'])->name('fees.student_status.export.pdf');
@@ -169,7 +172,7 @@ Route::middleware(['auth', 'student'])->prefix('student')->name('student.')->gro
 });
 
 // API: Check if attendance exists for a hostel and date
-Route::get('/api/hostels/{hostel}/attendance-exists', function($hostel) {
+Route::get('/api/hostel-attendance/{hostel}/attendance-exists', function($hostel) {
     $date = request('date');
     $exists = \App\Models\HostelAttendance::where('hostel_id', $hostel)
         ->where('date', $date)

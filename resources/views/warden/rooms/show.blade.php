@@ -292,7 +292,7 @@
                         <div class="d-flex align-items-center">
                             <span class="text-muted mr-3">
                                 Capacity: {{ $roomTypeData['type']->capacity ?? 'N/A' }} beds | 
-                                Rent: ${{ $roomTypeData['type']->price_per_month ?? 'N/A' }}/month
+                                Rent: ₹{{ $roomTypeData['type']->price_per_month ?? 'N/A' }}/month
                             </span>
                             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#addRoomModal{{ $roomTypeData['type']->id ?? 'default' }}">
                                 <i class="fas fa-plus"></i> Add Room
@@ -436,25 +436,31 @@
                                 return $room->roomType && $occupants >= $room->roomType->capacity;
                             })->count();
                         @endphp
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center">
                                 <div class="h4 text-success">{{ $emptyRooms }}</div>
                                 <div class="text-muted">Empty Rooms</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="h4 text-info">{{ $emptyRooms }}</div>
+                                <div class="text-muted">Available Rooms</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
                             <div class="text-center">
                                 <div class="h4 text-warning">{{ $partialRooms }}</div>
                                 <div class="text-muted">Partially Filled</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center">
                                 <div class="h4 text-danger">{{ $fullRooms }}</div>
                                 <div class="text-muted">Fully Occupied</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center">
                                 <div class="h4 text-primary">{{ $totalRooms }}</div>
                                 <div class="text-muted">Total Rooms</div>
@@ -736,13 +742,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Go directly to confirmation page instead of JavaScript confirmation
-            deleteSelectedRooms(selectedRooms, hostelId);
+                    // Show simple confirmation dialog
+            console.log('Showing bulk delete confirmation...');
+            if (confirm(`Are you sure you want to delete ${selectedRooms.length} selected room(s)? This action cannot be undone.`)) {
+                console.log('User confirmed bulk deletion, proceeding...');
+                deleteSelectedRooms(selectedRooms, hostelId);
+            } else {
+                console.log('User cancelled bulk deletion');
+            }
         });
     });
     
-    // Individual room delete buttons now go directly to confirmation page
-    // No JavaScript confirmation needed as we use 3-step confirmation page
+    // Individual room delete buttons now use simple confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, setting up delete confirmations...');
+        
+        // Add confirmation to individual delete buttons
+        const deleteForms = document.querySelectorAll('.delete-room-form');
+        console.log('Found delete forms:', deleteForms.length);
+        
+        deleteForms.forEach((form, index) => {
+            console.log(`Setting up form ${index}:`, form);
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('Delete form submitted, showing confirmation...');
+                
+                const roomNumber = this.querySelector('.delete-room-btn').getAttribute('data-room-number');
+                console.log('Room number to delete:', roomNumber);
+                
+                if (confirm(`Are you sure you want to delete Room ${roomNumber}? This action cannot be undone.`)) {
+                    console.log('User confirmed deletion, submitting form...');
+                    this.submit();
+                } else {
+                    console.log('User cancelled deletion');
+                }
+            });
+        });
+    });
     
     // Function to update bulk controls visibility
     function updateBulkControls(roomType) {

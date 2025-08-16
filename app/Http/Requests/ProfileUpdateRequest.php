@@ -51,7 +51,7 @@ class ProfileUpdateRequest extends FormRequest
             'admission_date' => ['required', 'date'],
             // Present Address
             'present_state' => ['required', 'string', 'max:255'],
-            'present_city' => ['required', 'string', 'max:255'],
+            'present_city' => ['nullable ', 'string', 'max:255'],
             'present_address' => ['required', 'string', 'max:500'],
             // Permanent Address
             'permanent_state' => ['required', 'string', 'max:255'],

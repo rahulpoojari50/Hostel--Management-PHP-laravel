@@ -34,13 +34,6 @@
                        class="btn btn-primary btn-sm">
                         <i class="fas fa-user-plus fa-sm"></i> Allot Room
                     </a>
-                    <form action="{{ route('warden.applications.update', $application) }}" method="POST" style="display:inline-block;">
-                        @csrf
-                        <input type="hidden" name="action" value="reject">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this application?');">
-                            <i class="fas fa-times fa-sm"></i> Reject
-                        </button>
-                    </form>
                 </td>
             </tr>
         @endforeach
